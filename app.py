@@ -78,14 +78,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ メイン領域全体の背景色調整 ＆ サイドバーの完全非表示化CSS
+# ★ メイン領域全体の背景色調整 ＆ スマホ表示最適化CSS
 st.markdown(
     """
     <style>
         /* メインエリア全体の背景を薄い黄色に */
         .main .block-container {
             background-color: #fffde7;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 12px;
         }
         /* アプリ全体の背景 */
@@ -102,18 +102,28 @@ st.markdown(
         .stHtml, iframe {
             background-color: transparent !important;
         }
-        /* ★ ヘッダー（Deployボタン・メニュー）を非表示にする */
+        /* ヘッダー（Deployボタン・メニュー）を非表示にする */
         header[data-testid="stHeader"] {
             visibility: hidden !important;
             height: 0px !important;
             padding: 0px !important;
         }
         
-        /* ★ フッター（Made with Streamlit）を非表示にする */
+        /* フッター（Made with Streamlit）を非表示にする */
         footer {
             visibility: hidden !important;
             height: 0px !important;
             padding: 0px !important;
+        }
+
+        /* ★ スマホ向け見出しフォントサイズの微調整と改行防止 */
+        h1 { font-size: 1.8rem !important; }
+        h2 { font-size: 1.4rem !important; }
+        h3 { font-size: 1.2rem !important; }
+        
+        h1, h2, h3 {
+            word-break: keep-all;
+            overflow-wrap: break-word;
         }
     </style>
     """,
@@ -138,7 +148,7 @@ title_col1, title_col2 = st.columns([3, 1])
 
 with title_col1:
     styled_title = (
-        '🛣️ <span style="font-weight: bold; font-size: 2.2rem;">'
+        '🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
         '<span style="color: #B71C1C;">R</span>oad'
         '<span style="color: #B71C1C;">R</span>adar'
         '<span style="color: #E65100;">C</span>hart'
@@ -153,15 +163,16 @@ with title_col2:
             <a href="{twitter_intent_url}" target="_blank" style="
                 background-color: #000000;
                 color: white;
-                padding: 10px 18px;
+                padding: 8px 16px;
                 border-radius: 20px;
                 text-decoration: none;
                 font-weight: bold;
-                font-size: 14px;
+                font-size: 13px;
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                white-space: nowrap;
             ">𝕏 で共有する</a>
         </div>
         """,
@@ -206,7 +217,7 @@ custom_title_input = st.text_input(
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-if st.button("全ルート一括解析を実行", type="primary"):
+if st.button("全ルート一括解析を実行", type="primary", use_container_width=True):
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
     elif not url_input:
@@ -308,7 +319,7 @@ if "all_analysis_results" in st.session_state:
     tab1, tab2 = st.tabs(["🖼️ 出力画像生成", "🗺️ インタラクティブマップ"])
 
     with tab1:
-        header_col1, header_col2 = st.columns([1, 1.2])
+        header_col1, header_col2 = st.columns([1, 1])
 
         with header_col1:
             st.subheader("合成画像出力一覧（SNS共有用）")
@@ -322,19 +333,20 @@ if "all_analysis_results" in st.session_state:
                 encoded_clean_url = urllib.parse.quote(common_gmaps_url)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={route_tweet_text}&url={encoded_clean_url}"
 
+                # ★ スマホでボタンが崩れて重ならないよう柔軟な折り返しレイアウトを適用
                 st.markdown(
                     f"""
-                    <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding-top: 5px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: flex-start; padding-bottom: 10px;">
                         <a href="{common_gmaps_url}" target="_blank" style="
-                            background-color: #4285F4; color: white; padding: 6px 10px; border-radius: 6px;
+                            background-color: #4285F4; color: white; padding: 6px 12px; border-radius: 6px;
                             text-decoration: none; font-size: 12px; font-weight: bold; white-space: nowrap;
                             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
                         ">🗺️ Google Maps表示</a>
                         <a href="{route_x_share_url}" target="_blank" style="
-                            background-color: #000000; color: white; padding: 6px 10px; border-radius: 6px;
+                            background-color: #000000; color: white; padding: 6px 12px; border-radius: 6px;
                             text-decoration: none; font-size: 12px; font-weight: bold; white-space: nowrap;
                             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                        ">𝕏 Google MapsルートをXで共有</a>
+                        ">𝕏 ルートをXで共有</a>
                         <span style="font-size: 11px; color: #666; white-space: nowrap;">※ルートは一致しないことがあります</span>
                     </div>
                     """,
@@ -342,7 +354,7 @@ if "all_analysis_results" in st.session_state:
                 )
 
         if all_results:
-            cols = st.columns(3)
+            cols = st.columns(len(all_results))
 
             for i, res in enumerate(all_results):
                 default_summary = res["default_summary"]
@@ -352,8 +364,8 @@ if "all_analysis_results" in st.session_state:
                     st.markdown(
                         f"""
                         <div style="min-height: 50px; margin-bottom: 8px;">
-                            <h3 style="margin: 0 0 2px 0; font-size: 1.2rem;">ルート {i+1}</h3>
-                            <div style="font-weight: bold; font-size: 1.05rem; color: #333;">{default_summary}</div>
+                            <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
+                            <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,
