@@ -78,7 +78,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ メイン領域全体の背景色調整 ＆ スマホ表示最適化CSS（レスポンシブ画像グリッド定義を追加）
+# ★ CSSの設定：Streamlitの標準Column要素をレスポンシブ化
 st.markdown(
     """
     <style>
@@ -126,30 +126,12 @@ st.markdown(
             overflow-wrap: break-word;
         }
 
-        /* ★ レスポンシブ画像カードレイアウト */
-        .route-grid-container {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 16px;
-            width: 100%;
-        }
-
-        .route-card {
-            flex: 1;
-            min-width: 0;
-            background-color: rgba(255, 255, 255, 0.4);
-            padding: 12px;
-            border-radius: 8px;
-        }
-
-        /* スマホ等（画面幅768px以下）では縦並び（1列）に切り替え */
+        /* ★ PCで横並び・スマホで縦並びにする強制レスポンシブCSS */
         @media (max-width: 768px) {
-            .route-grid-container {
-                flex-direction: column;
-            }
-            .route-card {
-                width: 100%;
+            div[data-testid="stColumn"] {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
             }
         }
     </style>
@@ -379,46 +361,42 @@ if "all_analysis_results" in st.session_state:
                     unsafe_allow_html=True,
                 )
 
-        # ★ PC（横並び）／ スマホ（縦並び）を自動切り替えする画像出力領域
+        # ★ st.columns を使いつつ、CSSのメディアクエリでスマホ時に100%幅（1列・縦並び）へ強制変更
         if all_results:
-            st.markdown('<div class="route-grid-container">', unsafe_allow_html=True)
-            
+            cols = st.columns(len(all_results))
+
             for i, res in enumerate(all_results):
                 default_summary = res["default_summary"]
                 combined_img = res["combined_img"]
 
-                # 各カード要素をCSSグリッド構造内で描画
-                st.markdown('<div class="route-card">', unsafe_allow_html=True)
-                
-                st.markdown(
-                    f"""
-                    <div style="min-height: 50px; margin-bottom: 8px;">
-                        <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
-                        <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                if combined_img:
-                    buf = io.BytesIO()
-                    combined_img.save(buf, format="JPEG", quality=95)
-                    st.download_button(
-                        label=f"💾 ルート{i+1}画像を保存",
-                        data=buf.getvalue(),
-                        file_name=f"output_route_{i+1}.jpg",
-                        mime="image/jpeg",
-                        key=f"download_img_{i}",
-                        use_container_width=True,
+                with cols[i]:
+                    st.markdown(
+                        f"""
+                        <div style="min-height: 50px; margin-bottom: 8px;">
+                            <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
+                            <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
                     )
 
-                    st.image(combined_img, use_container_width=True)
-                else:
-                    st.error("画像の生成に失敗しました。")
+                    if combined_img:
+                        buf = io.BytesIO()
+                        combined_img.save(buf, format="JPEG", quality=95)
+                        st.download_button(
+                            label=f"💾 ルート{i+1}画像を保存",
+                            data=buf.getvalue(),
+                            file_name=f"output_route_{i+1}.jpg",
+                            mime="image/jpeg",
+                            key=f"download_img_{i}",
+                            use_container_width=True,
+                        )
 
-                st.markdown('</div>', unsafe_allow_html=True)
+                        st.image(combined_img, use_container_width=True)
+                    else:
+                        st.error("画像の生成に失敗しました。")
 
-            st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown("<br>", unsafe_allow_html=True)
 
     with tab2:
         st.subheader("分析マップ（ルート別個別表示）")
