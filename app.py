@@ -146,11 +146,10 @@ api_key = api_key_default
 # --- アプリ基本URLの設定 ---
 APP_BASE_URL = "https://roadradarchart-eh3pdimpf5mqnf96utrzd8.streamlit.app/"
 
-# --- 𝕏 共有用のテキスト・URL作成 ---
-share_text = "RoadRadarChart - ロード特性分析ツール #RoadRadarChart"
+# --- 𝕏 共有用のテキスト・URL作成（ハッシュタグ後に改行を入れる設定） ---
+share_text = f"RoadRadarChart - ロード特性分析ツール\n#RoadRadarChart\n{APP_BASE_URL}"
 encoded_share_text = urllib.parse.quote(share_text)
-encoded_app_url = urllib.parse.quote(APP_BASE_URL)
-twitter_intent_url = f"https://twitter.com/intent/tweet?text={encoded_share_text}&url={encoded_app_url}"
+twitter_intent_url = f"https://twitter.com/intent/tweet?text={encoded_share_text}"
 
 # --- メインタイトル ＆ 𝕏 共有ボタン ---
 title_col1, title_col2 = st.columns([3, 1])
@@ -336,11 +335,11 @@ if "all_analysis_results" in st.session_state:
         with header_col2:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
-                route_tweet_text = urllib.parse.quote(
-                    "🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら："
-                )
-                encoded_clean_url = urllib.parse.quote(common_gmaps_url)
-                route_x_share_url = f"https://twitter.com/intent/tweet?text={route_tweet_text}&url={encoded_clean_url}"
+                
+                # ★ 個別ルート共有用URLも同様に改行区切りに設定
+                route_share_text = f"🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
+                encoded_route_share_text = urllib.parse.quote(route_share_text)
+                route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
 
                 st.markdown(
                     f"""
