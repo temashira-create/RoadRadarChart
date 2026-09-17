@@ -78,7 +78,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# メイン領域全体の背景色調整 ＆ スマホ表示最適化CSS
+# ★ メイン領域全体の背景色調整 ＆ スマホ表示最適化CSS
 st.markdown(
     """
     <style>
@@ -116,7 +116,7 @@ st.markdown(
             padding: 0px !important;
         }
 
-        /* スマホ向け見出しフォントサイズの微調整と改行防止 */
+        /* ★ スマホ向け見出しフォントサイズの微調整と改行防止 */
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
@@ -147,7 +147,6 @@ twitter_intent_url = f"https://twitter.com/intent/tweet?text={encoded_share_text
 title_col1, title_col2 = st.columns([3, 1])
 
 with title_col1:
-    # 修正箇所: 正しいタイトルHTML文字列を設定
     styled_title = (
         '🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
         '<span style="color: #B71C1C;">R</span>oad'
@@ -328,11 +327,13 @@ if "all_analysis_results" in st.session_state:
         with header_col2:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
-                
-                tweet_body = f"🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら！\n#RoadRadarChart\n{common_gmaps_url}"
-                encoded_tweet_body = urllib.parse.quote(tweet_body)
-                route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_tweet_body}"
+                route_tweet_text = urllib.parse.quote(
+                    "🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら："
+                )
+                encoded_clean_url = urllib.parse.quote(common_gmaps_url)
+                route_x_share_url = f"https://twitter.com/intent/tweet?text={route_tweet_text}&url={encoded_clean_url}"
 
+                # ★ スマホでボタンが崩れて重ならないよう柔軟な折り返しレイアウトを適用
                 st.markdown(
                     f"""
                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: flex-start; padding-bottom: 10px;">
@@ -353,22 +354,13 @@ if "all_analysis_results" in st.session_state:
                 )
 
         if all_results:
-            num_routes = len(all_results)
-
-            if num_routes == 1:
-                col_left, col_main, col_right = st.columns([1, 2, 1])
-                cols = [col_main]
-            elif num_routes == 2:
-                cols = st.columns(2)
-            else:
-                cols = st.columns(3)
+            cols = st.columns(len(all_results))
 
             for i, res in enumerate(all_results):
                 default_summary = res["default_summary"]
                 combined_img = res["combined_img"]
-                target_col = cols[i % len(cols)]
 
-                with target_col:
+                with cols[i]:
                     st.markdown(
                         f"""
                         <div style="min-height: 50px; margin-bottom: 8px;">
