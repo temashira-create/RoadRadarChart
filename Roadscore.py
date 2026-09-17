@@ -1053,19 +1053,22 @@ def save_outputs(selected_route, coords, sharp_points, medium_points, straight_s
         img_map_with_overlay = img_map.convert("RGBA")
         overlay_draw = ImageDraw.Draw(img_map_with_overlay)
 
-        # フォントの設定（メイリオ太字、サイズ30）
-        # フォントファイルのパスは環境に合わせて調整してください。
-        # Windows: "C:\\Windows\\Fonts\\meiryob.ttc" (メイリオ太字) または "C:\\Windows\\Fonts\\msgothic.ttc" (MSゴシック)
-        # Mac: "/System/Library/Fonts/jp/Hiragino Rounded Kaku Gothic Pro W4.ttc" 等
+        # フォントの設定（環境に応じてフォントを取得）
         try:
-            # Windows標準のメイリオ太字を使用
+            # Linux (Streamlit Cloud) / Windows / Mac 等のフォントフォールバック処理
             font_path = "C:\\Windows\\Fonts\\meiryob.ttc"
             font_main = ImageFont.truetype(font_path, 30)
-            font_unit = ImageFont.truetype(font_path, 20) # 単位用の少し小さいフォント
-        except IOError:
-            print("[警告] 指定された日本語フォントが見つからないため、デフォルトフォントを使用します。文字化けする可能性があります。")
-            font_main = ImageFont.load_default()
-            font_unit = ImageFont.load_default()
+            font_unit = ImageFont.truetype(font_path, 20)
+        except (IOError, OSError):
+            try:
+                # Streamlit Cloud (Linux) で packages.txt (fonts-noto-cjk) を入れた場合のフォントパス
+                font_path_linux = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+                font_main = ImageFont.truetype(font_path_linux, 30)
+                font_unit = ImageFont.truetype(font_path_linux, 20)
+            except (IOError, OSError):
+                # どちらもない場合はデフォルトフォント
+                font_main = ImageFont.load_default()
+                font_unit = ImageFont.load_default()
 
         # 表示するテキストを準備（例: "30km\n37分"）
         text_dist = selected_route['distance'] # "26.6km"
