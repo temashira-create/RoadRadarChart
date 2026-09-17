@@ -4,3 +4,6 @@ folium
 Pillow
 requests
 googlemaps
+matplotlib
+numpy
+qrcode
