@@ -78,7 +78,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ メイン領域全体の背景色調整 ＆ スマホ表示最適化CSS
+# ★ メイン領域全体の背景色調整 ＆ スマホ表示最適化CSS（レスポンシブ画像グリッド定義を追加）
 st.markdown(
     """
     <style>
@@ -116,7 +116,7 @@ st.markdown(
             padding: 0px !important;
         }
 
-        /* ★ スマホ向け見出しフォントサイズの微調整と改行防止 */
+        /* スマホ向け見出しフォントサイズの微調整と改行防止 */
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
@@ -124,6 +124,33 @@ st.markdown(
         h1, h2, h3 {
             word-break: keep-all;
             overflow-wrap: break-word;
+        }
+
+        /* ★ レスポンシブ画像カードレイアウト */
+        .route-grid-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .route-card {
+            flex: 1;
+            min-width: 0;
+            background-color: rgba(255, 255, 255, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        /* スマホ等（画面幅768px以下）では縦並び（1列）に切り替え */
+        @media (max-width: 768px) {
+            .route-grid-container {
+                flex-direction: column;
+            }
+            .route-card {
+                width: 100%;
+            }
         }
     </style>
     """,
@@ -333,7 +360,6 @@ if "all_analysis_results" in st.session_state:
                 encoded_clean_url = urllib.parse.quote(common_gmaps_url)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={route_tweet_text}&url={encoded_clean_url}"
 
-                # ★ スマホでボタンが崩れて重ならないよう柔軟な折り返しレイアウトを適用
                 st.markdown(
                     f"""
                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: flex-start; padding-bottom: 10px;">
@@ -353,41 +379,46 @@ if "all_analysis_results" in st.session_state:
                     unsafe_allow_html=True,
                 )
 
+        # ★ PC（横並び）／ スマホ（縦並び）を自動切り替えする画像出力領域
         if all_results:
-            cols = st.columns(len(all_results))
-
+            st.markdown('<div class="route-grid-container">', unsafe_allow_html=True)
+            
             for i, res in enumerate(all_results):
                 default_summary = res["default_summary"]
                 combined_img = res["combined_img"]
 
-                with cols[i]:
-                    st.markdown(
-                        f"""
-                        <div style="min-height: 50px; margin-bottom: 8px;">
-                            <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
-                            <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+                # 各カード要素をCSSグリッド構造内で描画
+                st.markdown('<div class="route-card">', unsafe_allow_html=True)
+                
+                st.markdown(
+                    f"""
+                    <div style="min-height: 50px; margin-bottom: 8px;">
+                        <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
+                        <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                if combined_img:
+                    buf = io.BytesIO()
+                    combined_img.save(buf, format="JPEG", quality=95)
+                    st.download_button(
+                        label=f"💾 ルート{i+1}画像を保存",
+                        data=buf.getvalue(),
+                        file_name=f"output_route_{i+1}.jpg",
+                        mime="image/jpeg",
+                        key=f"download_img_{i}",
+                        use_container_width=True,
                     )
 
-                    if combined_img:
-                        buf = io.BytesIO()
-                        combined_img.save(buf, format="JPEG", quality=95)
-                        st.download_button(
-                            label=f"💾 ルート{i+1}画像を保存",
-                            data=buf.getvalue(),
-                            file_name=f"output_route_{i+1}.jpg",
-                            mime="image/jpeg",
-                            key=f"download_img_{i}",
-                            use_container_width=True,
-                        )
+                    st.image(combined_img, use_container_width=True)
+                else:
+                    st.error("画像の生成に失敗しました。")
 
-                        st.image(combined_img, use_container_width=True)
-                    else:
-                        st.error("画像の生成に失敗しました。")
+                st.markdown('</div>', unsafe_allow_html=True)
 
-                    st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     with tab2:
         st.subheader("分析マップ（ルート別個別表示）")
