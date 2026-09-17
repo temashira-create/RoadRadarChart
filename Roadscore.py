@@ -661,12 +661,20 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 def create_radar_chart_image(metrics, title_text="ルート特性"):
   """真円が崩れないように余白とタイトル位置を固定したレーダーチャート生成関数"""
+  import os
   from matplotlib.font_manager import FontProperties
 
-  try:
-    jp_font = FontProperties(fname="C:\\Windows\\Fonts\\meiryob.ttc")
-  except Exception:
-    jp_font = None
+  # OSに合わせて存在する日本語フォントを自動で選択
+  font_path_win = "C:\\Windows\\Fonts\\meiryob.ttc"
+  font_path_linux = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+
+  if os.path.exists(font_path_win):
+    jp_font = FontProperties(fname=font_path_win)
+  elif os.path.exists(font_path_linux):
+    jp_font = FontProperties(fname=font_path_linux)
+  else:
+    # どちらも見つからない場合はフォントファミリー名で検索
+    jp_font = FontProperties(family="sans-serif")
 
   labels = [m["name"] for m in metrics]
   scores = [m["score"] for m in metrics]
@@ -729,12 +737,11 @@ def create_radar_chart_image(metrics, title_text="ルート特性"):
     )
 
   # --- タイトル文字列の整形 ---
-  # 既に「【 】」が含まれていなければ追加する（ユーザーが自由に入力したタイトルを綺麗に括る）
   display_title = str(title_text).strip()
   if not (display_title.startswith("【") and display_title.endswith("】")):
     display_title = f"【{display_title}】"
 
-  # タイトルの位置を y=1.08 に固定（複数行になっても円を潰さない）
+  # タイトルの位置を y=1.08 に固定
   ax.set_title(
       display_title,
       fontproperties=jp_font,
@@ -771,8 +778,13 @@ def generate_route_image_memory(
 
   FoliumのHTML文字列を生成して返す
   """
+  import os
+
+  # フォントパスの定義（Windows用・Linux用）
+  font_path_win = "C:\\Windows\\Fonts\\meiryob.ttc"
+  font_path_linux = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+
   # --- タイトルテキストの確定処理 ---
-  # custom_summary が指定されており、かつ空文字や「自動」でない場合はそれを採用
   if (
       custom_summary
       and custom_summary.strip()
@@ -838,7 +850,6 @@ def generate_route_image_memory(
     return None, None
 
   # --- 3. レーダーチャート画像生成 (メモリ上) ---
-  # 確定した summary_text を title_text として渡す
   img_radar = create_radar_chart_image(
       metrics, title_text=summary_text
   ).resize((640, 640))
@@ -848,11 +859,14 @@ def generate_route_image_memory(
     img_map_with_overlay = img_map.convert("RGBA")
     overlay_draw = ImageDraw.Draw(img_map_with_overlay)
 
-    try:
-      font_path = "C:\\Windows\\Fonts\\meiryob.ttc"
-      font_main = ImageFont.truetype(font_path, 30)
-      font_unit = ImageFont.truetype(font_path, 20)
-    except IOError:
+    # 距離・時間表示のフォント設定（自動判定）
+    if os.path.exists(font_path_win):
+      font_main = ImageFont.truetype(font_path_win, 30)
+      font_unit = ImageFont.truetype(font_path_win, 20)
+    elif os.path.exists(font_path_linux):
+      font_main = ImageFont.truetype(font_path_linux, 30)
+      font_unit = ImageFont.truetype(font_path_linux, 20)
+    else:
       font_main = ImageFont.load_default()
       font_unit = ImageFont.load_default()
 
@@ -927,30 +941,24 @@ def generate_route_image_memory(
     combined_img.paste(img_radar, (0, 0))
     combined_img.paste(img_map_final, (0, 640))
 
-    # ==================================================
-    # ★ ここから：ロゴ overlay 描画処理を追加
-    # ==================================================
-    try:
-      # フォントの準備（メイリオ太字、無ければデフォルト）
-      font_logo = ImageFont.truetype("C:\\Windows\\Fonts\\meiryob.ttc", 22)
-    except IOError:
-      try:
-        font_logo = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
-      except IOError:
-        font_logo = ImageFont.load_default()
+    # ロゴ overlay 描画処理（自動判定）
+    if os.path.exists(font_path_win):
+      font_logo = ImageFont.truetype(font_path_win, 22)
+    elif os.path.exists(font_path_linux):
+      font_logo = ImageFont.truetype(font_path_linux, 22)
+    else:
+      font_logo = ImageFont.load_default()
 
     logo_text = "RoadRadarChart"
 
-    # テキストサイズを取得して最下部中央に配置計算
     draw_temp = ImageDraw.Draw(combined_img)
     bbox_logo = draw_temp.textbbox((0, 0), logo_text, font=font_logo)
     logo_w = bbox_logo[2] - bbox_logo[0]
     logo_h = bbox_logo[3] - bbox_logo[1]
 
     logo_x = (640 - logo_w) // 2
-    logo_y = 1240 - logo_h - 10  # 下端から25px上に設置
+    logo_y = 1240 - logo_h - 10
 
-    # 背景の黒い半透明角丸座布団を作成
     padding_x, padding_y = 12, 4
     logo_bg_layer = Image.new("RGBA", (640, 1240), (0, 0, 0, 0))
     logo_bg_draw = ImageDraw.Draw(logo_bg_layer)
@@ -962,10 +970,9 @@ def generate_route_image_memory(
             logo_y + logo_h + padding_y,
         ],
         radius=6,
-        fill=(0, 0, 0, 180),  # 黒透明
+        fill=(0, 0, 0, 180),
     )
 
-    # 合成と文字描画
     combined_img = Image.alpha_composite(
         combined_img.convert("RGBA"), logo_bg_layer
     ).convert("RGB")
@@ -973,14 +980,12 @@ def generate_route_image_memory(
     draw_final.text(
         (logo_x, logo_y), logo_text, font=font_logo, fill=(255, 255, 255)
     )
-    # ==================================================
 
     return combined_img, html_content
 
   except Exception as e:
     print(f"[画像結合エラー]: {e}")
     return None, None
-
 
 def save_outputs(selected_route, coords, sharp_points, medium_points, straight_segments, steep_slopes, thresholds, metrics, api_key, base_dir, custom_summary=None, maps_url=None):
     """
