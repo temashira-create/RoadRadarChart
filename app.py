@@ -121,7 +121,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：ダークモード対策の文字色強制指定 ＆ レスポンシブ化
+# ★ CSSの設定：ダークモード対策の文字色強制指定 ＆ レスポンシブ化 ＆ expander枠線透明化
 st.markdown(
     """
     <style>
@@ -141,6 +141,13 @@ st.markdown(
         /* 見出し・段落・ラベル・ボタン内等のテキスト色を固定 */
         h1, h2, h3, h4, h5, h6, p, label, span, div {
             color: #333333;
+        }
+
+        /* ③ expander（👉 デフォルトのルートから選択してみる）の枠線を透明化 */
+        div[data-testid="stExpander"] {
+            border: none !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
         }
 
         /* サイドバーを完全に隠す */
@@ -207,7 +214,7 @@ title_col1, title_col2 = st.columns([3, 1])
 
 with title_col1:
     styled_title = (
-        '🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
+        '流域🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
         '<span style="color: #B71C1C;">R</span>oad'
         '<span style="color: #B71C1C;">R</span>adar'
         '<span style="color: #E65100;">C</span>hart'
@@ -256,38 +263,36 @@ if os.path.exists(image_path):
 else:
     st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
 
-# --- ② 見出し ＆ URL入力 ＆ にょき展開プルダウン ---
+# --- ② 見出し ＆ URL入力 ＆ プリセット連携 ---
 st.markdown("### ② URLをペーストしてください")
 
-# セッション状態（URL保持用）の初期化
-if "current_url" not in st.session_state:
-    st.session_state["current_url"] = default_url
+# 入力欄の初期値をセッションで保持
+if "main_url_input" not in st.session_state:
+    st.session_state["main_url_input"] = default_url
 
-# 1. メインURL入力バー（1本ドカンと配置）
+# プリセットが選択された時の処理（selectboxのon_changeコールバック）
+def on_preset_select():
+    selected = st.session_state.get("selected_preset_key")
+    if selected in SPOT_PRESETS:
+        st.session_state["main_url_input"] = SPOT_PRESETS[selected]
+
+# 1. メインURL入力バー
 url_input = st.text_input(
     "URL入力欄",
-    value=st.session_state["current_url"],
     placeholder="https://www.google.com/maps/dir/...",
     label_visibility="collapsed",
     key="main_url_input",
 )
 
-# 2. ひっそり展開するアコーディオン（タップすると下にょき）
+# 2. 枠線透明化されたアコーディオン（👉 デフォルトのルートから選択してみる）
 with st.expander("👉 デフォルトのルートから選択してみる"):
-    selected_preset = st.selectbox(
+    st.selectbox(
         "主要ワインディングプリセット",
         options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
         label_visibility="collapsed",
+        key="selected_preset_key",
+        on_change=on_preset_select,
     )
-    if selected_preset in SPOT_PRESETS:
-        # プリセットが選ばれたらURL入力欄を上書き更新
-        chosen_url = SPOT_PRESETS[selected_preset]
-        if st.session_state["current_url"] != chosen_url:
-            st.session_state["current_url"] = chosen_url
-            st.rerun()
-
-# 最終的な入力値の確定
-url_input = st.session_state["current_url"]
 
 # --- ③ 見出し ＆ タイトル入力 ---
 st.markdown("### ③ タイトルを入力してください")
@@ -301,13 +306,16 @@ custom_title_input = st.text_input(
 st.markdown("<br>", unsafe_allow_html=True)
 
 if st.button("全ルート一括解析を実行", type="primary", use_container_width=True):
+    # 最新の入力バーの文字列を取得
+    target_url = st.session_state.get("main_url_input", "").strip()
+
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
-    elif not url_input:
+    elif not target_url:
         st.warning("GoogleマップのURLを入力してください。")
     else:
         with st.spinner("URL解析中..."):
-            expanded_url = resolve_short_url(url_input)
+            expanded_url = resolve_short_url(target_url)
             origin, destination, waypoints = parse_google_maps_url(expanded_url)
 
         if not origin or not destination:
@@ -384,7 +392,6 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                     })
 
                 st.session_state["all_analysis_results"] = all_results
-                st.session_state["url_input"] = url_input
 
 # --- 解析結果の表示 ---
 if "all_analysis_results" in st.session_state:
@@ -411,7 +418,7 @@ if "all_analysis_results" in st.session_state:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
 
-                route_share_text = f"🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
+                route_share_text = f"流域🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
                 encoded_route_share_text = urllib.parse.quote(route_share_text)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
 
