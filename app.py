@@ -12,7 +12,6 @@ from streamlit_folium import st_folium
 
 # --- 主要ワインディングのプリセットURL定義 ---
 SPOT_PRESETS = {
-    "選択してください（プリセットから入力）": "",
     "【北海道】中山峠（国道230号）": (
         "https://www.google.com/maps/dir/42.9669144,141.1676026/42.7972619,140.9508441/"
     ),
@@ -255,27 +254,26 @@ if os.path.exists(image_path):
     with img_col1:
         st.image(image_path, use_container_width=True)
 else:
-    st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
+    st.info(f"※ 画像ファイル (1.jpg) が見つかります。参照パス: {image_path}")
 
 # --- ② 見出し ＆ URL入力 ---
 st.markdown("### ② URLをペーストしてください")
 
-# 主要ワインディングを選択するプルダウン
-selected_preset_name = st.selectbox(
-    "主要ワインディングを選択（選択するとURLが自動入力されます）",
-    options=list(SPOT_PRESETS.keys()),
-)
+# 1つのプルダウン付きバーに集約（未選択状態・ラベル非表示）
+placeholder_text = "ここにペースト（または、主要ワインディングをプルダウンから選択）"
 
-# プルダウンで選択された場合はそのURLを入力欄の初期値にする
-selected_preset_url = SPOT_PRESETS.get(selected_preset_name, "")
-initial_url_value = selected_preset_url if selected_preset_url else default_url
-
-url_input = st.text_input(
-    "URL入力欄",
-    value=initial_url_value,
-    placeholder="https://www.google.com/maps/dir/...",
+selected_option = st.selectbox(
+    "URL入力バー",
+    options=[placeholder_text] + list(SPOT_PRESETS.keys()),
+    index=0,
     label_visibility="collapsed",
 )
+
+# プルダウンで選択された場合はそのURL、未選択時はパラメータ/直接入力を利用
+if selected_option in SPOT_PRESETS:
+    url_input = SPOT_PRESETS[selected_option]
+else:
+    url_input = default_url
 
 # --- ③ 見出し ＆ タイトル入力 ---
 st.markdown("### ③ タイトルを入力してください")
