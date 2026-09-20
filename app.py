@@ -82,7 +82,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* メインエリア全体の背景と文字色（①ダークモード視認性対策） */
+        /* メインエリア全体の背景と文字色（ダークモード視認性対策） */
         .main .block-container {
             background-color: #fffde7 !important;
             color: #333333 !important;
@@ -151,10 +151,10 @@ st.markdown(
 api_key_default, thresholds_default, scoring_weights = load_config()
 api_key = api_key_default
 
-# --- ② アプリ基本URL（外部ブラウザ強制起動パラメータ付き） ---
+# --- アプリ基本URL（外部ブラウザ強制起動パラメータ付き） ---
 APP_BASE_URL = "https://roadradarchart-eh3pdimpf5mqnf96utrzd8.streamlit.app/?openExternalBrowser=1"
 
-# --- 𝕏 共有用のテキスト・URL作成（ハッシュタグ後に改行を入れる設定） ---
+# --- 𝕏 共有用のテキスト・URL作成 ---
 share_text = f"RoadRadarChart - ロード特性分析ツール\n#RoadRadarChart\n{APP_BASE_URL}"
 encoded_share_text = urllib.parse.quote(share_text)
 twitter_intent_url = f"https://twitter.com/intent/tweet?text={encoded_share_text}"
@@ -486,16 +486,21 @@ if "all_analysis_results" in st.session_state:
             st_folium(m, width=900, height=450, key=f"interactive_map_route_{i}")
             st.markdown("---")
 
-        # ③ インタラクティブマップ下部に各種分析判定基準（パラメータ詳細）を表示
+        # 設定ファイルからの数値を動的に表示（定義パラメータ）
+        max_angle = thresholds_default.get("max_straight_angle_change_deg", 5)
+        min_len = int(thresholds_default.get("min_straight_length_m", 100))
+
+        # 分析定義パラメータの表示
         with st.expander("🔍 **分析パラメータ・各指標の判定基準を見る**", expanded=True):
             st.markdown(
-                """
-                | 分析項目 | 検出・判定基準 | 解説 |
-                | :--- | :--- | :--- |
-                | 🔴 **ヘアピン率** | **曲率半径 R < 80m** | 1kmあたりの極小コーナー（急カーブ）の箇所数 |
-                | 🟠 **中速コーナー率** | **曲率半径 80m ≤ R < 200m** | 1kmあたりの中速で抜けられるコーナーの箇所数 |
-                | 🟢 **ストレート率** | **直線区間（見通し直線）** | 全走行距離に対するストレート区間の割合(%) |
-                | 🟣 **激坂（上下）率** | **勾配斜度 ±8% 以上** | 全走行距離に対する急な上り坂・下り坂の割合(%) |
-                | 🔵 **平均速度** | **想定平均移動速度** | 距離と所要時間から算出される平均車速(km/h) |
+                f"""
+                | 項目 | 定義・判定基準 |
+                | :--- | :--- |
+                | 🔴 **ヘアピン定義** | 曲率半径 R < 80m のコーナー |
+                | 🟠 **中速コーナー定義** | 曲率半径 80m ≤ R < 200m のコーナー |
+                | 🟢 **ストレート定義** | 角度{max_angle}°以内で{min_len}m以上続く区間 |
+                | 🟣 **激坂（上下）定義** | 勾配斜度 ±8% 以上 |
+                | ⚪ **総走行距離** | Google情報の総走行距離(km) |
+                | ⚪ **平均速度** | Google情報の総走行距離(km) ÷ Google情報の所要時間(h) |
                 """
             )
