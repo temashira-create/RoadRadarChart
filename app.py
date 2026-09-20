@@ -10,6 +10,50 @@ from Roadscore import *
 import streamlit as st
 from streamlit_folium import st_folium
 
+# --- 主要ワインディングのプリセットURL定義 ---
+SPOT_PRESETS = {
+    "選択してください（プリセットから入力）": "",
+    "【北海道】中山峠（国道230号）": (
+        "https://www.google.com/maps/dir/42.9669144,141.1676026/42.7972619,140.9508441/"
+    ),
+    "【北海道】支笏湖畔（国道453号）": (
+        "https://www.google.com/maps/dir/42.9294804,141.3388389/42.7635329568632,+141.43340101402558/"
+    ),
+    "【岩手/秋田】八幡平アスピーテライン": (
+        "https://www.google.com/maps/dir/39.9227227,140.9764819/39.9725475,140.8052669/"
+    ),
+    "【宮城/山形】蔵王エコーライン": (
+        "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
+    ),
+    "【茨城】筑波スカイライン / 朝日峠": (
+        "https://www.google.com/maps/dir/36.1595485,140.1655816/36.2128858,140.122155/"
+    ),
+    "【栃木】第二いろは坂（上り）": (
+        "https://www.google.com/maps/dir/36.7382917,139.5256014/36.7376547,139.4988488/"
+    ),
+    "【神奈川】箱根ターンパイク": (
+        "https://www.google.com/maps/dir/35.185495,139.0506673/35.2424302,139.1399881/"
+    ),
+    "【山梨】富士スバルライン": (
+        "https://www.google.com/maps/dir/35.4851117,138.7698783/35.3939787,138.7307626/"
+    ),
+    "【静岡】伊豆スカイライン": (
+        "https://www.google.com/maps/dir/35.1200052,139.0387769/34.9058489,139.0388753/"
+    ),
+    "【三重/滋賀】鈴鹿スカイライン": (
+        "https://www.google.com/maps/dir/34.9752636,136.3467787/35.0219461,136.4643708/"
+    ),
+    "【兵庫】西六甲ドライブウェイ": (
+        "https://www.google.com/maps/dir/34.7406943,135.1751489/34.7496879,135.2157105/"
+    ),
+    "【高知/愛媛】四国カルスト": (
+        "https://www.google.com/maps/dir/34.2799486,131.3302598/34.2255569,131.310228/"
+    ),
+    "【熊本/大分】阿蘇やまなみハイウェイ": (
+        "https://www.google.com/maps/dir/33.2470522,131.2919401/32.939607,131.1175302/"
+    ),
+}
+
 
 def resolve_short_url(url):
     """maps.app.goo.gl などの短縮URLを展開して正式なURLを返す"""
@@ -215,9 +259,20 @@ else:
 
 # --- ② 見出し ＆ URL入力 ---
 st.markdown("### ② URLをペーストしてください")
+
+# 主要ワインディングを選択するプルダウン
+selected_preset_name = st.selectbox(
+    "主要ワインディングを選択（選択するとURLが自動入力されます）",
+    options=list(SPOT_PRESETS.keys()),
+)
+
+# プルダウンで選択された場合はそのURLを入力欄の初期値にする
+selected_preset_url = SPOT_PRESETS.get(selected_preset_name, "")
+initial_url_value = selected_preset_url if selected_preset_url else default_url
+
 url_input = st.text_input(
     "URL入力欄",
-    value=default_url,
+    value=initial_url_value,
     placeholder="https://www.google.com/maps/dir/...",
     label_visibility="collapsed",
 )
@@ -343,7 +398,7 @@ if "all_analysis_results" in st.session_state:
         with header_col2:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
-                
+
                 route_share_text = f"🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
                 encoded_route_share_text = urllib.parse.quote(route_share_text)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
@@ -368,7 +423,7 @@ if "all_analysis_results" in st.session_state:
                 )
 
         if all_results:
-            # ★ 修正ポイント: ルートが1つ〜2つの時でも常に「最低3カラム」を確保し、画像が全幅に肥大化するのを防ぐ
+            # ルートが1〜2件の時でも画面幅いっぱいに肥大化しないよう常に最低3カラム確保
             num_columns = max(3, len(all_results))
             cols = st.columns(num_columns)
 
@@ -492,7 +547,7 @@ if "all_analysis_results" in st.session_state:
         max_angle = thresholds_default.get("max_straight_angle_change_deg", 5)
         min_len = int(thresholds_default.get("min_straight_length_m", 100))
 
-        # 分析定義パラメータの常時表示（expanderを廃止）
+        # 分析定義パラメータの常時表示
         st.markdown("### 🔍 分析パラメータ・各指標の判定基準")
         st.markdown(
             f"""
