@@ -368,7 +368,9 @@ if "all_analysis_results" in st.session_state:
                 )
 
         if all_results:
-            cols = st.columns(len(all_results))
+            # ★ 修正ポイント: ルートが1つ〜2つの時でも常に「最低3カラム」を確保し、画像が全幅に肥大化するのを防ぐ
+            num_columns = max(3, len(all_results))
+            cols = st.columns(num_columns)
 
             for i, res in enumerate(all_results):
                 default_summary = res["default_summary"]
