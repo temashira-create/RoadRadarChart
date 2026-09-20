@@ -490,17 +490,17 @@ if "all_analysis_results" in st.session_state:
         max_angle = thresholds_default.get("max_straight_angle_change_deg", 5)
         min_len = int(thresholds_default.get("min_straight_length_m", 100))
 
-        # 分析定義パラメータの表示
-        with st.expander("🔍 **分析パラメータ・各指標の判定基準を見る**", expanded=True):
-            st.markdown(
-                f"""
-                | 項目 | 定義・判定基準 |
-                | :--- | :--- |
-                | 🔴 **ヘアピン定義** | 曲率半径 R < 80m のコーナー |
-                | 🟠 **中速コーナー定義** | 曲率半径 80m ≤ R < 200m のコーナー |
-                | 🟢 **ストレート定義** | 角度{max_angle}°以内で{min_len}m以上続く区間 |
-                | 🟣 **激坂（上下）定義** | 勾配斜度 ±8% 以上 |
-                | ⚪ **総走行距離** | Google情報の総走行距離(km) |
-                | ⚪ **平均速度** | Google情報の総走行距離(km) ÷ Google情報の所要時間(h) |
-                """
-            )
+        # 分析定義パラメータの常時表示（expanderを廃止）
+        st.markdown("### 🔍 分析パラメータ・各指標の判定基準")
+        st.markdown(
+            f"""
+            | 項目 | 定義・判定基準 |
+            | :--- | :--- |
+            | 🔴 **ヘアピン定義** | 曲率半径 R < 80m のコーナー |
+            | 🟠 **中速コーナー定義** | 曲率半径 80m ≤ R < 200m のコーナー |
+            | 🟢 **ストレート定義** | 角度{max_angle}°以内で{min_len}m以上続く区間 |
+            | 🟣 **激坂（上下）定義** | 勾配斜度 ±8% 以上 |
+            | ⚪ **総走行距離** | Google情報の総走行距離(km) |
+            | ⚪ **平均速度** | Google情報の総走行距離(km) ÷ Google情報の所要時間(h) |
+            """
+        )
