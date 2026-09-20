@@ -121,7 +121,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：ダークモード対策の文字色強制指定 ＆ レスポンシブ化 ＆ expander枠線透明化
+# ★ CSSの設定：ダークモード対策 ＆ レスポンシブ化 ＆ expander枠線同色・透明化指定
 st.markdown(
     """
     <style>
@@ -143,9 +143,13 @@ st.markdown(
             color: #333333;
         }
 
-        /* ③ expander（👉 デフォルトのルートから選択してみる）の枠線を透明化 */
-        div[data-testid="stExpander"] {
+        /* expander（👉 デフォルトのルートから選択してみる）の枠線・背景色を完全に消去 */
+        div[data-testid="stExpander"], 
+        details[data-testid="stExpander"],
+        div[data-testid="stExpander"] > div,
+        details[data-testid="stExpander"] > summary {
             border: none !important;
+            border-color: #fffde7 !important;
             box-shadow: none !important;
             background-color: transparent !important;
         }
@@ -214,7 +218,7 @@ title_col1, title_col2 = st.columns([3, 1])
 
 with title_col1:
     styled_title = (
-        '流域🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
+        '🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
         '<span style="color: #B71C1C;">R</span>oad'
         '<span style="color: #B71C1C;">R</span>adar'
         '<span style="color: #E65100;">C</span>hart'
@@ -284,7 +288,7 @@ url_input = st.text_input(
     key="main_url_input",
 )
 
-# 2. 枠線透明化されたアコーディオン（👉 デフォルトのルートから選択してみる）
+# 2. 枠線を無効化・同色化指定したアコーディオン
 with st.expander("👉 デフォルトのルートから選択してみる"):
     st.selectbox(
         "主要ワインディングプリセット",
@@ -418,7 +422,7 @@ if "all_analysis_results" in st.session_state:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
 
-                route_share_text = f"流域🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
+                route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
                 encoded_route_share_text = urllib.parse.quote(route_share_text)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
 
