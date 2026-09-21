@@ -60,7 +60,7 @@ SPOT_PRESETS = {
     "【愛媛/高知】四国カルスト（天狗高原）": (
         "https://www.google.com/maps/dir/33.478383,132.8778385/33.476513982071516,+133.0021898951934/@33.4674381,132.9568195,15.38z/data=!4m7!4m6!1m0!1m3!2m2!1d133.0021899!2d33.476514!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
-    "【熊本/大分】阿asoやまなみハイウェイ": (
+    "【熊本/大分】阿蘇やまなみハイウェイ": (
         "https://www.google.com/maps/dir/33.2470522,131.2919401/32.939607,131.1175302/"
     ),
 }
@@ -133,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：バー（入力コンテナ等）をグレーにしつつ全体のテーマを維持
+# ★ CSSの設定：アコーディオン枠も含め入力エリア全体を統一グレー化
 st.markdown(
     """
     <style>
@@ -158,13 +158,15 @@ st.markdown(
             padding: 0px !important;
         }
 
-        /* ★ 入力バー・セレクトボックス・枠囲みエリアをグレー（#f0f0f0 等）に設定 */
+        /* ★ 入力バー・セレクトボックス・アコーディオン（expander）をグレーに統一 */
         div[data-baseweb="select"] > div,
         div[data-baseweb="input"] > div,
         div[data-testid="stTextInput"] input,
-        div[data-testid="stSelectbox"] > div {
+        div[data-testid="stSelectbox"] > div,
+        div[data-testid="stExpander"] {
             background-color: #f2f2f2 !important;
             border-radius: 8px !important;
+            border: 1px solid #e0e0e0 !important;
         }
 
         /* 見出しのスタイル調整 */
@@ -247,21 +249,38 @@ if "main_url_input" not in st.session_state:
     st.session_state["main_url_input"] = default_url
 if "selected_preset_key" not in st.session_state:
     st.session_state["selected_preset_key"] = "-- 選択してください --"
+if "custom_title_input" not in st.session_state:
+    st.session_state["custom_title_input"] = ""
 
-# プリセットが選択された時のコールバック
+
+# --- コールバック関数の定義 ---
+
+# 1. プリセットが選択されたとき
 def on_preset_select():
     selected = st.session_state.get("selected_preset_key")
     if selected in SPOT_PRESETS:
+        # URLを反映
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
+        # タイトルにプリセット名を自動入力
+        st.session_state["custom_title_input"] = selected
 
-# 手動でURLが変更された時のコールバック
+
+# 2. 手動でURLが入力・変更されたとき
 def on_url_input_change():
+    # 選択ボックスをデフォルトに戻す
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 
-# --- 新① 道を選択してください ---
+    current_title = st.session_state.get("custom_title_input", "")
+    # タイトル欄に入っている文字が「いずれかのプリセット名」と一致している場合はクリア
+    if current_title in SPOT_PRESETS:
+        st.session_state["custom_title_input"] = ""
+    # ユーザーオリジナルの文字が書かれている場合はそのまま保持される
+
+
+# --- ① 道を選択してください ---
 st.markdown("### ① 道を選択してください")
 
-# 1. プリセットセレクトボックス（メイン）
+# 1. プリセットセレクトボックス
 st.selectbox(
     "主要ワインディングプリセット",
     options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
@@ -270,10 +289,10 @@ st.selectbox(
     on_change=on_preset_select,
 )
 
-# 2. アコーディオン：独自の経路を入力する（URL貼り付け＆案内画像）
+# 2. アコーディオン（グレー背景化）
 with st.expander("👉 独自の経路を入力する"):
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
-    
+
     # 手動URL入力バー
     url_input = st.text_input(
         "URL入力欄",
@@ -294,20 +313,21 @@ with st.expander("👉 独自の経路を入力する"):
     else:
         st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
 
-# --- 新② タイトルを入力してください ---
+# --- ② タイトルを入力してください ---
 st.markdown("### ② タイトルを入力してください")
-custom_title_input = st.text_input(
+st.text_input(
     "タイトル入力欄",
-    value="",
     placeholder="未入力の場合は自動で設定されます",
     label_visibility="collapsed",
+    key="custom_title_input",
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 if st.button("全ルート一括解析を実行", type="primary", use_container_width=True):
-    # 最新の入力バーの文字列を取得
+    # 最新の入力値を取得
     target_url = st.session_state.get("main_url_input", "").strip()
+    user_title = st.session_state.get("custom_title_input", "").strip()
 
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
@@ -330,7 +350,6 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                 st.error("経路情報が取得できませんでした。")
             else:
                 all_results = []
-                user_title = custom_title_input.strip()
 
                 for i, route in enumerate(routes):
                     # タイトル未入力（空欄）または「自動」の場合はルートのサマリーを使用
