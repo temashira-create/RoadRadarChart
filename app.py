@@ -283,9 +283,8 @@ def on_url_input_change():
     if current_title in SPOT_PRESETS:
         st.session_state["custom_title_input"] = ""
 
-
-# --- ① 道を選択してください ---
-st.markdown("### ① 道を選択してください")
+# --- 道を選択してください ---
+st.markdown("### 道を選択してください")
 
 # 1. プリセットセレクトボックス
 st.selectbox(
@@ -296,12 +295,12 @@ st.selectbox(
     on_change=on_preset_select,
 )
 
-# 2. アコーディオン（デフォルト背景）
+# 2. メインアコーディオン「👉 独自の経路を入力する」
 with st.expander("👉 独自の経路を入力する"):
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
     # 手動URL入力バー
-    url_input = st.text_input(
+    st.text_input(
         "URL入力欄",
         placeholder="https://www.google.com/maps/dir/...",
         label_visibility="collapsed",
@@ -309,25 +308,28 @@ with st.expander("👉 独自の経路を入力する"):
         on_change=on_url_input_change,
     )
 
-    # 画像（1.jpg）の表示
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(script_dir, "1.jpg")
+    # 入れ子のアコーディオン「👉 URLをコピーする方法を見る」
+    with st.expander("👉 URLをコピーする方法を見る"):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        image_path = os.path.join(script_dir, "1.jpg")
 
-    if os.path.exists(image_path):
-        img_col1, img_col2 = st.columns([0.8, 0.2])
-        with img_col1:
-            st.image(image_path, use_container_width=True)
-    else:
-        st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
+        if os.path.exists(image_path):
+            img_col1, img_col2 = st.columns([0.8, 0.2])
+            with img_col1:
+                st.image(image_path, use_container_width=True)
+        else:
+            st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
 
-# --- ② タイトルを入力してください ---
-st.markdown("### ② タイトルを入力してください")
-st.text_input(
-    "タイトル入力欄",
-    placeholder="未入力の場合は自動で設定されます",
-    label_visibility="collapsed",
-    key="custom_title_input",
-)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # タイトル入力セクション（アコーディオン内に収納）
+    st.markdown("<b>タイトルを入力してください</b>", unsafe_allow_html=True)
+    st.text_input(
+        "タイトル入力欄",
+        placeholder="未入力の場合は自動で設定されます",
+        label_visibility="collapsed",
+        key="custom_title_input",
+    )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
