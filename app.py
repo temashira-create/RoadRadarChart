@@ -10,6 +10,61 @@ from Roadscore import *
 import streamlit as st
 from streamlit_folium import st_folium
 
+# --- 主要ワインディングのプリセットURL定義 ---
+SPOT_PRESETS = {
+    "【北海道】中山峠（国道230号）": (
+        "https://www.google.com/maps/dir/42.9669144,141.1676026/42.7972619,140.9508441/"
+    ),
+    "【北海道】支笏湖畔（国道453号）": (
+        "https://www.google.com/maps/dir/42.9294804,141.3388389/42.7635329,141.433401/"
+    ),
+    "【岩手/秋田】八幡平アスピーテライン": (
+        "https://www.google.com/maps/dir/39.9227227,140.9764819/39.9725475,140.8052669/"
+    ),
+    "【宮城】コバルトライン": (
+        "https://www.google.com/maps/dir/38.43500383790911,+141.44633077780648/38.40267251250418,+141.45259500107528/38.32521250918779,+141.51287317973953/38.2804423,141.5185324/@38.3578769,141.3218905,11z/data=!3m1!4b1!4m15!4m14!1m3!2m2!1d141.4463308!2d38.4350038!1m3!2m2!1d141.452595!2d38.4026725!1m3!2m2!1d141.5128732!2d38.3252125!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "【宮城/山形】蔵王エコーライン": (
+        "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
+    ),
+    "【茨城】筑波スカイライン/朝日峠": (
+        "https://www.google.com/maps/dir/36.1595485,140.1655816/36.2128858,140.122155/"
+    ),
+    "【栃木】第二いろは坂（上り）": (
+        "https://www.google.com/maps/dir/36.7382917,139.5256014/36.7376547,139.4988488/"
+    ),
+    "【神奈川】箱根ターンパイク": (
+        "https://www.google.com/maps/dir/35.185495,139.0506673/35.2424302,139.1399881/"
+    ),
+    "【山梨】富士スバルライン": (
+        "https://www.google.com/maps/dir/35.4851117,138.7698783/35.3939787,138.7307626/"
+    ),
+    "【長野】ビーナスライン": (
+        "https://www.google.com/maps/dir/36.2183759,138.1411094/36.15023597920541,+138.14106974931596/36.110976385485344,+138.23882633673736/@36.1556956,138.0999304,12z/data=!3m1!4b1!4m11!4m10!1m0!1m3!2m2!1d138.1410697!2d36.150236!1m3!2m2!1d138.2388263!2d36.1109764!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "【静岡】伊豆スカイライン": (
+        "https://www.google.com/maps/dir/35.1200052,139.0387769/34.9058489,139.0388753/"
+    ),
+    "【三重/滋賀】鈴鹿スカイライン": (
+        "https://www.google.com/maps/dir/34.9752636,136.3467787/35.0219461,136.4643708/"
+    ),
+    "【兵庫】西六甲ドライブウェイ": (
+        "https://www.google.com/maps/dir/34.7406943,135.1751489/34.7496879,135.2157105/"
+    ),
+    "【和歌山/奈良】高野龍神スカイライン": (
+        "https://www.google.com/maps/dir/34.215000,135.586000/34.045000,135.550000/"
+    ),
+    "【山口】カルストロード（秋吉台）": (
+        "https://www.google.com/maps/dir/33.480000,133.010000/33.470000,132.930000/"
+    ),
+    "【愛媛/高知】四国カルスト（天狗高原）": (
+        "https://www.google.com/maps/dir/33.478383,132.8778385/33.476513982071516,+133.0021898951934/@33.4674381,132.9568195,15.38z/data=!4m7!4m6!1m0!1m3!2m2!1d133.0021899!2d33.476514!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "【熊本/大分】阿asoやまなみハイウェイ": (
+        "https://www.google.com/maps/dir/33.2470522,131.2919401/32.939607,131.1175302/"
+    ),
+}
+
 
 def resolve_short_url(url):
     """maps.app.goo.gl などの短縮URLを展開して正式なURLを返す"""
@@ -78,20 +133,85 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：Streamlitの標準Column要素をレスポンシブ化
+# ★ CSSの設定：プレースホルダー見認性向・ブラックアウト完全回避・レスポンシブ化
 st.markdown(
     """
     <style>
-        /* メインエリア全体の背景を薄い黄色に */
+        /* メインエリア全体の背景と文字色（ダークモード視認性対策） */
         .main .block-container {
-            background-color: #fffde7;
+            background-color: #fffde7 !important;
+            color: #333333 !important;
             padding: 1.5rem;
             border-radius: 12px;
         }
-        /* アプリ全体の背景 */
+        /* アプリ全体の背景と標準テキストカラー指定 */
         .stApp {
-            background-color: #fefce8;
+            background-color: #fefce8 !important;
+            color: #333333 !important;
         }
+        
+        /* 見出し・段落・ラベル・ボタン内等のテキスト色を固定 */
+        h1, h2, h3, h4, h5, h6, p, label, span, div {
+            color: #333333 !important;
+        }
+
+        /* ★ 入力フォームの背景と基本テキスト */
+        input[type="text"], 
+        div[data-baseweb="input"], 
+        div[data-baseweb="select"] {
+            background-color: #f0f0f0 !important;
+            color: #222222 !important;
+            border-color: #cccccc !important;
+        }
+
+        /* ★ プレースホルダーの文字色をハッキリとした濃いグレー(#666666)に固定 */
+        input[type="text"]::placeholder,
+        textarea::placeholder {
+            color: #666666 !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: #666666 !important;
+        }
+
+        /* ★ セレクトボックス（ドロップダウンメニュー）のブラックアウト防止対策 */
+        div[data-baseweb="popover"], 
+        div[data-baseweb="popover"] > div,
+        ul[role="listbox"],
+        ul[data-baseweb="menu"] {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.15) !important;
+        }
+
+        li[role="option"],
+        li[data-baseweb="option"] {
+            background-color: #ffffff !important;
+            color: #222222 !important;
+        }
+
+        /* ドロップダウン選択肢のテキスト色強制固定 */
+        li[role="option"] *,
+        li[data-baseweb="option"] * {
+            color: #222222 !important;
+        }
+
+        li[role="option"]:hover,
+        li[data-baseweb="option"]:hover,
+        li[aria-selected="true"] {
+            background-color: #e0e0e0 !important;
+        }
+
+        /* expander（👉 タップして選択）の枠線・背景色を完全に消去 */
+        div[data-testid="stExpander"], 
+        details[data-testid="stExpander"],
+        div[data-testid="stExpander"] > div,
+        details[data-testid="stExpander"] > summary {
+            border: none !important;
+            border-color: #fffde7 !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+        }
+
         /* サイドバーを完全に隠す */
         section[data-testid="stSidebar"] {
             display: none;
@@ -126,7 +246,7 @@ st.markdown(
             overflow-wrap: break-word;
         }
 
-        /* ★ PCで横並び・スマホで縦並びにする強制レスポンシブCSS */
+        /* PCで横並び・スマホで縦並びにするレスポンシブCSS */
         @media (max-width: 768px) {
             div[data-testid="stColumn"] {
                 width: 100% !important;
@@ -143,10 +263,10 @@ st.markdown(
 api_key_default, thresholds_default, scoring_weights = load_config()
 api_key = api_key_default
 
-# --- アプリ基本URLの設定 ---
-APP_BASE_URL = "https://roadradarchart-eh3pdimpf5mqnf96utrzd8.streamlit.app/"
+# --- アプリ基本URL（外部ブラウザ強制起動パラメータ付き） ---
+APP_BASE_URL = "https://roadradarchart-eh3pdimpf5mqnf96utrzd8.streamlit.app/?openExternalBrowser=1"
 
-# --- 𝕏 共有用のテキスト・URL作成（ハッシュタグ後に改行を入れる設定） ---
+# --- 𝕏 共有用のテキスト・URL作成 ---
 share_text = f"RoadRadarChart - ロード特性分析ツール\n#RoadRadarChart\n{APP_BASE_URL}"
 encoded_share_text = urllib.parse.quote(share_text)
 twitter_intent_url = f"https://twitter.com/intent/tweet?text={encoded_share_text}"
@@ -194,7 +314,7 @@ default_url = query_params.get("map_url", "")
 # --- ① ガイドテキスト ---
 st.markdown("### ① Googleマップで経路を検索して、そのURLをコピーしてください")
 
-# --- ※ 画像（1.jpg）の表示（60%相当のサイズに変更） ---
+# --- ※ 画像（1.jpg）の表示 ---
 script_dir = os.path.dirname(os.path.abspath(__file__))
 image_path = os.path.join(script_dir, "1.jpg")
 
@@ -205,20 +325,51 @@ if os.path.exists(image_path):
 else:
     st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
 
-# --- ② 見出し ＆ URL入力 ---
+# --- ② 見出し ＆ URL入力 ＆ プリセット連携 ---
 st.markdown("### ② URLをペーストしてください")
+
+# セッション状態の初期化
+if "main_url_input" not in st.session_state:
+    st.session_state["main_url_input"] = default_url
+if "selected_preset_key" not in st.session_state:
+    st.session_state["selected_preset_key"] = "-- 選択してください --"
+
+# プリセットが選択された時の処理（selectboxのon_changeコールバック）
+def on_preset_select():
+    selected = st.session_state.get("selected_preset_key")
+    if selected in SPOT_PRESETS:
+        st.session_state["main_url_input"] = SPOT_PRESETS[selected]
+
+# ★ ユーザーが入力バーに直接手動入力した際の処理（text_inputのon_changeコールバック）
+def on_url_input_change():
+    # ユーザーが編集したらドロップダウンの選択を未選択（初期状態）に戻す
+    st.session_state["selected_preset_key"] = "-- 選択してください --"
+
+# 1. メインURL入力バー
 url_input = st.text_input(
     "URL入力欄",
-    value=default_url,
     placeholder="https://www.google.com/maps/dir/...",
     label_visibility="collapsed",
+    key="main_url_input",
+    on_change=on_url_input_change,
 )
+
+# 2. 「👉 タップして選択」へ文言変更したアコーディオン
+with st.expander("👉 タップして選択"):
+    st.selectbox(
+        "主要ワインディングプリセット",
+        options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
+        label_visibility="collapsed",
+        key="selected_preset_key",
+        on_change=on_preset_select,
+    )
 
 # --- ③ 見出し ＆ タイトル入力 ---
 st.markdown("### ③ タイトルを入力してください")
+# valueは空文字列にし、初期からプレースホルダー（グレー文字）で表示
 custom_title_input = st.text_input(
     "タイトル入力欄",
-    value="自動",
+    value="",
     placeholder="未入力の場合は自動で設定されます",
     label_visibility="collapsed",
 )
@@ -226,13 +377,16 @@ custom_title_input = st.text_input(
 st.markdown("<br>", unsafe_allow_html=True)
 
 if st.button("全ルート一括解析を実行", type="primary", use_container_width=True):
+    # 最新の入力バーの文字列を取得
+    target_url = st.session_state.get("main_url_input", "").strip()
+
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
-    elif not url_input:
+    elif not target_url:
         st.warning("GoogleマップのURLを入力してください。")
     else:
         with st.spinner("URL解析中..."):
-            expanded_url = resolve_short_url(url_input)
+            expanded_url = resolve_short_url(target_url)
             origin, destination, waypoints = parse_google_maps_url(expanded_url)
 
         if not origin or not destination:
@@ -250,6 +404,7 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                 user_title = custom_title_input.strip()
 
                 for i, route in enumerate(routes):
+                    # タイトル未入力（空欄）または「自動」の場合はルートのサマリーを使用
                     if not user_title or user_title == "自動":
                         image_title = route.get("summary", "")
                     else:
@@ -309,7 +464,6 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                     })
 
                 st.session_state["all_analysis_results"] = all_results
-                st.session_state["url_input"] = url_input
 
 # --- 解析結果の表示 ---
 if "all_analysis_results" in st.session_state:
@@ -335,9 +489,8 @@ if "all_analysis_results" in st.session_state:
         with header_col2:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
-                
-                # ★ 個別ルート共有用URLも同様に改行区切りに設定
-                route_share_text = f"🛣️ RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
+
+                route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
                 encoded_route_share_text = urllib.parse.quote(route_share_text)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
 
@@ -360,9 +513,10 @@ if "all_analysis_results" in st.session_state:
                     unsafe_allow_html=True,
                 )
 
-        # ★ st.columns を使いつつ、CSSのメディアクエリでスマホ時に100%幅（1列・縦並び）へ強制変更
         if all_results:
-            cols = st.columns(len(all_results))
+            # ルートが1〜2件の時でも画面幅いっぱいに肥大化しないよう常に最低3カラム確保
+            num_columns = max(3, len(all_results))
+            cols = st.columns(num_columns)
 
             for i, res in enumerate(all_results):
                 default_summary = res["default_summary"]
@@ -371,7 +525,7 @@ if "all_analysis_results" in st.session_state:
                 with cols[i]:
                     st.markdown(
                         f"""
-                        <div style="min-height: 50px; margin-bottom: 8px;">
+                        <div style="min-height: 45px; margin-bottom: 4px;">
                             <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
                             <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
                         </div>
@@ -380,17 +534,15 @@ if "all_analysis_results" in st.session_state:
                     )
 
                     if combined_img:
-                        buf = io.BytesIO()
-                        combined_img.save(buf, format="JPEG", quality=95)
-                        st.download_button(
-                            label=f"💾 ルート{i+1}画像を保存",
-                            data=buf.getvalue(),
-                            file_name=f"output_route_{i+1}.jpg",
-                            mime="image/jpeg",
-                            key=f"download_img_{i}",
-                            use_container_width=True,
+                        # ★ 画像長押しでの保存案内テキストを表示
+                        st.markdown(
+                            '<div style="font-size: 0.85rem; color: #555555; background-color: #f5f5f5; padding: 6px 10px; border-radius: 6px; border: 1px solid #dddddd; margin-bottom: 8px; text-align: center;">'
+                            "📲 <b>画像を長押しして保存できます。</b>"
+                            "</div>",
+                            unsafe_allow_html=True,
                         )
 
+                        # 合成画像の表示
                         st.image(combined_img, use_container_width=True)
                     else:
                         st.error("画像の生成に失敗しました。")
@@ -479,3 +631,40 @@ if "all_analysis_results" in st.session_state:
 
             st_folium(m, width=900, height=450, key=f"interactive_map_route_{i}")
             st.markdown("---")
+
+        # 設定ファイルからの数値を動的に表示（定義パラメータ）
+        max_angle = thresholds_default.get("max_straight_angle_change_deg", 15.0)
+        min_len = int(thresholds_default.get("min_straight_length_m", 300))
+
+        # 分析定義パラメータの常時表示（太字なし・文字サイズ縮小・項目列の幅確保）
+        st.markdown("### 🔍 分析パラメータ・各指標の判定基準")
+        st.markdown(
+            f"""
+            <style>
+                .param-table {{
+                    font-size: 0.9rem;
+                    line-height: 1.6;
+                    border-collapse: collapse;
+                    width: 100%;
+                }}
+                .param-table td {{
+                    padding: 4px 8px;
+                    border-bottom: 1px solid #ddd;
+                }}
+                .param-table .col-item {{
+                    white-space: nowrap;
+                    min-width: 140px;
+                    font-weight: normal;
+                }}
+            </style>
+            <table class="param-table">
+                <tr><td class="col-item">🔴 ヘアピン</td><td>曲率半径 R < 80m のコーナー</td></tr>
+                <tr><td class="col-item">🟠 中速コーナー</td><td>曲率半径 80m ≤ R < 200m のコーナー</td></tr>
+                <tr><td class="col-item">🟢 ストレート</td><td>角度{max_angle}°以内で{min_len}m以上続く区間</td></tr>
+                <tr><td class="col-item">🟣 激坂(上下)</td><td>勾配斜度 ±8% 以上</td></tr>
+                <tr><td class="col-item">⚪ 総走行距離</td><td>Google情報の総走行距離(km)</td></tr>
+                <tr><td class="col-item">⚪ 平均速度</td><td>Google情報の総走行距離(km) ÷ Google情報の所要時間(h)</td></tr>
+            </table>
+            """,
+            unsafe_allow_html=True,
+        )
