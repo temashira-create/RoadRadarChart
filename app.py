@@ -133,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：セレクトボックスおよびテキスト入力欄をグレー化
+# ★ CSSの設定：セレクトボックスおよびテキスト入力欄をグレー化 ＆ ボタンテキストの左寄せ
 st.markdown(
     """
     <style>
@@ -169,6 +169,13 @@ st.markdown(
         /* セレクトボックス内部の文字表示エリアの背景を透明にして下のグレーを透かせる */
         div[data-testid="stSelectbox"] [role="combobox"] {
             background-color: transparent !important;
+        }
+
+        /* ボタンのテキストを左寄せ＆アコーディオン風にデザイン調整 */
+        div.stButton > button {
+            text-align: left !important;
+            justify-content: flex-start !important;
+            padding-left: 15px !important;
         }
 
         /* 見出しのスタイル調整 */
@@ -286,12 +293,21 @@ def on_url_input_change():
 # --- 道を選択してください ---
 st.markdown("### 道を選択してください")
 
-# 選択肢の末尾に「独自の経路を入力する↓」を追加
+# 選択肢の定義
 preset_options = (
     ["-- 選択してください --"]
     + list(SPOT_PRESETS.keys())
     + ["独自の経路を入力する↓"]
 )
+
+# ★ ボタン押下時の処理をセレクトボックス生成前に記述（WidgetAlreadyInstantiatedError回避）
+button_clicked = st.button("👉 独自の経路を入力する", use_container_width=True)
+
+if button_clicked:
+    st.session_state["selected_preset_key"] = "独自の経路を入力する↓"
+    st.session_state["show_custom_input"] = True
+    st.session_state["main_url_input"] = ""
+    st.session_state["custom_title_input"] = ""
 
 # 1. プリセットセレクトボックス
 selected_option = st.selectbox(
@@ -302,14 +318,7 @@ selected_option = st.selectbox(
     on_change=on_preset_select,
 )
 
-# 2. 「👉 独自の経路を入力する」ボタン（タップ契機①）
-if st.button("👉 独自の経路を入力する", use_container_width=True):
-    st.session_state["show_custom_input"] = True
-    st.session_state["selected_preset_key"] = "独自の経路を入力する↓"
-    st.session_state["main_url_input"] = ""
-    st.session_state["custom_title_input"] = ""
-
-# セレクトボックス選択（契機②）またはボタン押下（契機①）のどちらかを判定
+# 選択肢の直接選択（契機①）またはボタン押下（契機②）のいずれかを判定
 is_custom_selected = (selected_option == "独自の経路を入力する↓") or st.session_state.get("show_custom_input", False)
 
 # ★ 契機①または契機②を満たした場合にスーッと入力エリアを展開
