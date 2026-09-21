@@ -15,6 +15,21 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # --- 主要ワインディングのプリセットURL定義（「都道府県：名称」形式） ---
 SPOT_PRESETS = {
+    "北海道：風車の道/白い道(宗谷丘陵)": (
+        "https://www.google.com/maps/dir/45.4867342,141.9380983/45.4864329,141.8818399/@45.4807874,141.8932542,13.63z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "北海道：エサヌカ線": (
+        "https://www.google.com/maps/dir/%E3%82%A8%E3%82%B5%E3%83%8C%E3%82%AB%E7%B7%9A%E5%A7%8B%E7%82%B9%E3%80%81%E3%80%92098-5761+%E5%8C%97%E6%B5%B7%E9%81%93%E6%9E%9D%E5%B9%B8%E9%83%A1%E6%B5%9C%E9%A0%93%E5%88%A5%E7%94%BA/45.217019491568884,+142.28300523220912/45.2731759,142.23485/@45.2134845,142.2053034,11.59z/data=!4m13!4m12!1m5!1m1!1s0x5f11c700430344bf:0xe315648c2b815ed0!2m2!1d142.3420743!2d45.1499871!1m3!2m2!1d142.2830052!2d45.2170195!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "北海道：美幌峠": (
+        "https://www.google.com/maps/dir/43.5164535,144.4292535/43.648996418253276,+144.24820408041555/43.8172551,144.1223164/@43.6668614,143.9461238,10z/data=!3m1!4b1!4m8!4m7!1m0!1m3!2m2!1d144.2482041!2d43.6489964!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "北海道：ジェットコースターの路": (
+        "https://www.google.com/maps/dir/43.500296,142.4126591/43.5326332,142.44114/@43.5324878,142.4391923,17.88z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "北海道：ニセコパノラマライン": (
+        "https://www.google.com/maps/dir/42.9735764,140.5267134/42.8351231,140.6173915/@42.9270163,140.5048822,11.5z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
     "北海道：中山峠（国道230号）": (
         "https://www.google.com/maps/dir/42.9669144,141.1676026/42.7972619,140.9508441/"
     ),
@@ -69,8 +84,14 @@ SPOT_PRESETS = {
     "栃木：第二いろは坂（上り）": (
         "https://www.google.com/maps/dir/36.7382917,139.5256014/36.7376547,139.4988488/"
     ),
+    "群馬/長野：志賀草津高原ルート": (
+        "https://www.google.com/maps/dir/36.623631,138.5859928/36.7234727,138.4452191/@36.7111474,138.4347547,11.66z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
     "神奈川：箱根ターンパイク": (
         "https://www.google.com/maps/dir/35.185495,139.0506673/35.2424302,139.1399881/"
+    ),
+    "神奈川：椿ライン": (
+        "https://www.google.com/maps/dir/35.1596641,139.0606476/35.1802556,139.0554736/35.184726,139.0318046/@35.1822077,139.0233985,12.85z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "山梨：富士スバルライン": (
         "https://www.google.com/maps/dir/35.4851117,138.7698783/35.3939787,138.7307626/"
@@ -83,6 +104,9 @@ SPOT_PRESETS = {
     ),
     "三重/滋賀：鈴鹿スカイライン": (
         "https://www.google.com/maps/dir/34.9752636,136.3467787/35.0219461,136.4643708/"
+    ),
+    "大阪/奈良：暗峠": (
+        "https://www.google.com/maps/dir/34.6718473,135.6542235/34.6663956,135.6694087/34.6657057,135.6989334/@34.6822731,135.6503687,12.95z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "兵庫：西六甲ドライブウェイ": (
         "https://www.google.com/maps/dir/34.7406943,135.1751489/34.7496879,135.2157105/"
@@ -97,7 +121,10 @@ SPOT_PRESETS = {
         "https://www.google.com/maps/dir/33.478383,132.8778385/33.476513982071516,+133.0021898951934/@33.4674381,132.9568195,15.38z/data=!4m7!4m6!1m0!1m3!2m2!1d133.0021899!2d33.476514!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "熊本/大分：阿蘇やまなみハイウェイ": (
-        "https://www.google.com/maps/dir/33.2470522,131.2919401/32.939607,131.1175302/"
+        "https://www.google.com/maps/dir/33.2470522,131.2919401/33.109872057897014,+131.22355550092635/32.939607,131.1175302/@33.0903979,131.023345,65041m/data=!3m1!1e3!4m8!4m7!1m0!1m3!2m2!1d131.2235555!2d33.1098721!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "熊本：ミルクロード": (
+        "https://www.google.com/maps/dir/32.8814464,130.8940668/32.9974726,131.0136553/32.9729105,131.14149/@32.9488999,130.913898,11.17z/data=!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
 }
 
