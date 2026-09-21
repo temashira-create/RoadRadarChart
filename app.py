@@ -641,8 +641,8 @@ if "all_analysis_results" in st.session_state:
         )
 
 # --- フッター（ツール開発者） ---
-st.markdown("<br><hr>", unsafe_allow_html=True)
-st.markdown("### ツール開発者")
+# 見切り線の上に約3行分の改行クリアランスを確保
+st.markdown("<br><br><br><hr>", unsafe_allow_html=True)
 
 footer_image_path = os.path.join(script_dir, "2.png")
 
@@ -660,10 +660,11 @@ if os.path.exists(footer_image_path):
     with f_col1:
         st.image(footer_image_path, use_container_width=True)
     with f_col2:
+        # 「ツール開発者 素手の人」を見出しとして配置
         st.markdown(
             """
             <div style="font-size: 0.9rem; line-height: 1.7; color: #333;">
-                <b>素手の人</b><br>
+                <h3 style="margin: 0 0 8px 0; font-size: 1.2rem;">ツール開発者 素手の人</h3>
                 このツールはGeminiにpythonを書いてもらって作りました。<br>
                 １日の実行回数制限を設けることで完全無料で動いていますので安心してお使いください。<br><br>
                 バグなどあればXのメンションで教えてもらえると助かります。<br>
