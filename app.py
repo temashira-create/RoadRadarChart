@@ -208,6 +208,8 @@ if "selected_preset_key" not in st.session_state:
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 if "custom_title_input" not in st.session_state:
     st.session_state["custom_title_input"] = ""
+if "is_custom_mode" not in st.session_state:
+    st.session_state["is_custom_mode"] = False
 
 
 # --- コールバック関数の定義 ---
@@ -216,9 +218,21 @@ def on_preset_select():
     if selected in SPOT_PRESETS:
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
         st.session_state["custom_title_input"] = selected
+        st.session_state["is_custom_mode"] = False
     elif selected == "👉 独自の経路を入力する↓":
+        st.session_state["is_custom_mode"] = True
         st.session_state["main_url_input"] = ""
         st.session_state["custom_title_input"] = ""
+
+
+def toggle_custom_mode():
+    st.session_state["is_custom_mode"] = not st.session_state["is_custom_mode"]
+    if st.session_state["is_custom_mode"]:
+        st.session_state["main_url_input"] = ""
+        st.session_state["custom_title_input"] = ""
+        st.session_state["selected_preset_key"] = "-- 選択してください --"
+    else:
+        st.session_state["selected_preset_key"] = "-- 選択してください --"
 
 
 # --- 道を選択してください ---
@@ -243,8 +257,17 @@ selected_option = st.selectbox(
     on_change=on_preset_select,
 )
 
-# 「👉 独自の経路を入力する↓」が選択されている場合は常にカスタム入力欄を表示する
-if selected_option == "👉 独自の経路を入力する↓":
+# 【慎重な人向け】セレクトボックスの下に常設する独立したボタン
+st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+button_label = (
+    "📂 プリセット選択に戻る"
+    if st.session_state["is_custom_mode"]
+    else "👉 独自の経路を入力する"
+)
+st.button(button_label, on_click=toggle_custom_mode, use_container_width=True)
+
+# どちらの導線（プルダウンの最後、または下の独立ボタン）からでもカスタムモードがONになったら入力欄を表示
+if st.session_state["is_custom_mode"]:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
