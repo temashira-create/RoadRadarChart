@@ -489,7 +489,7 @@ if "all_analysis_results" in st.session_state:
                 with cols[i]:
                     st.markdown(
                         f"""
-                        <div style="min-height: 50px; margin-bottom: 8px;">
+                        <div style="min-height: 45px; margin-bottom: 4px;">
                             <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
                             <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
                         </div>
@@ -498,17 +498,15 @@ if "all_analysis_results" in st.session_state:
                     )
 
                     if combined_img:
-                        buf = io.BytesIO()
-                        combined_img.save(buf, format="JPEG", quality=95)
-                        st.download_button(
-                            label=f"💾 ルート{i+1}画像を保存",
-                            data=buf.getvalue(),
-                            file_name=f"output_route_{i+1}.jpg",
-                            mime="image/jpeg",
-                            key=f"download_img_{i}",
-                            use_container_width=True,
+                        # ★ 画像長押しでの保存案内テキストを表示
+                        st.markdown(
+                            '<div style="font-size: 0.85rem; color: #555555; background-color: #f5f5f5; padding: 6px 10px; border-radius: 6px; border: 1px solid #dddddd; margin-bottom: 8px; text-align: center;">'
+                            "📲 <b>画像を長押しして保存できます。</b><br><span style='font-size: 0.75rem; color: #777;'>(PCの場合は右クリック ➔ 名前を付けて画像を保存)</span>"
+                            "</div>",
+                            unsafe_allow_html=True,
                         )
 
+                        # 合成画像の表示
                         st.image(combined_img, use_container_width=True)
                     else:
                         st.error("画像の生成に失敗しました。")
