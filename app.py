@@ -147,12 +147,27 @@ st.markdown(
             background-color: transparent !important;
         }
 
-        /* ▼ ボタンのテキストを左寄せにする設定を追加 ▼ */
+        /* ▼▼▼ ボタンとその内部要素を強制的に左寄せにする設定 ▼▼▼ */
+        div[data-testid="stButton"] {
+            display: flex;
+        }
         div[data-testid="stButton"] button {
+            width: 100% !important;
             justify-content: flex-start !important;
             text-align: left !important;
             padding-left: 20px !important;
         }
+        div[data-testid="stButton"] button div {
+            display: flex !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            width: 100% !important;
+        }
+        div[data-testid="stButton"] button p {
+            text-align: left !important;
+            margin: 0 !important;
+        }
+        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
@@ -170,7 +185,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 api_key_default, thresholds_default, scoring_weights = load_config()
 api_key = api_key_default
