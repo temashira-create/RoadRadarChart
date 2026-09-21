@@ -300,16 +300,7 @@ preset_options = (
     + ["独自の経路を入力する↓"]
 )
 
-# ★ ボタン押下時の処理をセレクトボックス生成前に記述（WidgetAlreadyInstantiatedError回避）
-button_clicked = st.button("👉 独自の経路を入力する", use_container_width=True)
-
-if button_clicked:
-    st.session_state["selected_preset_key"] = "独自の経路を入力する↓"
-    st.session_state["show_custom_input"] = True
-    st.session_state["main_url_input"] = ""
-    st.session_state["custom_title_input"] = ""
-
-# 1. プリセットセレクトボックス
+# 1. プリセットセレクトボックス（バーを上に配置）
 selected_option = st.selectbox(
     "主要ワインディングプリセット",
     options=preset_options,
@@ -317,6 +308,14 @@ selected_option = st.selectbox(
     key="selected_preset_key",
     on_change=on_preset_select,
 )
+
+# 2. 「👉 独自の経路を入力する」ボタン（バーのすぐ下に配置）
+if st.button("👉 独自の経路を入力する", use_container_width=True):
+    st.session_state["selected_preset_key"] = "独自の経路を入力する↓"
+    st.session_state["show_custom_input"] = True
+    st.session_state["main_url_input"] = ""
+    st.session_state["custom_title_input"] = ""
+    st.rerun()
 
 # 選択肢の直接選択（契機①）またはボタン押下（契機②）のいずれかを判定
 is_custom_selected = (selected_option == "独自の経路を入力する↓") or st.session_state.get("show_custom_input", False)
