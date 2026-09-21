@@ -10,6 +10,9 @@ from Roadscore import *
 import streamlit as st
 from streamlit_folium import st_folium
 
+# --- スクリプトのディレクトリパスを最初に定義 ---
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # --- 主要ワインディングのプリセットURL定義（「都道府県：名称」形式） ---
 SPOT_PRESETS = {
     "北海道：中山峠（国道230号）": (
@@ -322,7 +325,6 @@ if st.session_state["is_custom_mode"]:
     )
 
     with st.expander("👉 URLをコピーする方法を見る"):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
         image_path = os.path.join(script_dir, "1.jpg")
 
         if os.path.exists(image_path):
