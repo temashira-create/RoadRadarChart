@@ -163,7 +163,7 @@ st.markdown(
         div[data-baseweb="input"] > div,
         div[data-testid="stTextInput"] input,
         div[data-testid="stSelectbox"] > div {
-            background-color: #f2f2f2 !important;  /* お好みのグレー色（例: #e8e8e8 や #f2f2f2） */
+            background-color: #f2f2f2 !important;
             border-radius: 8px !important;
         }
 
@@ -242,62 +242,60 @@ with title_col2:
 query_params = st.query_params
 default_url = query_params.get("map_url", "")
 
-# --- ① ガイドテキスト ---
-st.markdown("### ① Googleマップで経路を検索して、そのURLをコピーしてください")
-
-# --- ※ 画像（1.jpg）の表示 ---
-script_dir = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(script_dir, "1.jpg")
-
-if os.path.exists(image_path):
-    img_col1, img_col2 = st.columns([0.6, 0.4])
-    with img_col1:
-        st.image(image_path, use_container_width=True)
-else:
-    st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
-
-# --- ② 見出し ＆ URL入力 ＆ プリセット連携 ---
-st.markdown("### ② URLをペーストしてください")
-
-# セッション状態の初期化
+# --- セッション状態の初期化 ---
 if "main_url_input" not in st.session_state:
     st.session_state["main_url_input"] = default_url
 if "selected_preset_key" not in st.session_state:
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 
-# プリセットが選択された時の処理（selectboxのon_changeコールバック）
+# プリセットが選択された時のコールバック
 def on_preset_select():
     selected = st.session_state.get("selected_preset_key")
     if selected in SPOT_PRESETS:
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
 
-# ★ ユーザーが入力バーに直接手動入力した際の処理（text_inputのon_changeコールバック）
+# 手動でURLが変更された時のコールバック
 def on_url_input_change():
-    # ユーザーが編集したらドロップダウンの選択を未選択（初期状態）に戻す
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 
-# 1. メインURL入力バー
-url_input = st.text_input(
-    "URL入力欄",
-    placeholder="https://www.google.com/maps/dir/...",
+# --- 新① 道を選択してください ---
+st.markdown("### ① 道を選択してください")
+
+# 1. プリセットセレクトボックス（メイン）
+st.selectbox(
+    "主要ワインディングプリセット",
+    options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
     label_visibility="collapsed",
-    key="main_url_input",
-    on_change=on_url_input_change,
+    key="selected_preset_key",
+    on_change=on_preset_select,
 )
 
-# 2. 「👉 タップして選択」へ文言変更したアコーディオン
-with st.expander("👉 タップして選択"):
-    st.selectbox(
-        "主要ワインディングプリセット",
-        options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
+# 2. アコーディオン：独自の経路を入力する（URL貼り付け＆案内画像）
+with st.expander("👉 独自の経路を入力する"):
+    st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
+    
+    # 手動URL入力バー
+    url_input = st.text_input(
+        "URL入力欄",
+        placeholder="https://www.google.com/maps/dir/...",
         label_visibility="collapsed",
-        key="selected_preset_key",
-        on_change=on_preset_select,
+        key="main_url_input",
+        on_change=on_url_input_change,
     )
 
-# --- ③ 見出し ＆ タイトル入力 ---
-st.markdown("### ③ タイトルを入力してください")
-# valueは空文字列にし、初期からプレースホルダー（グレー文字）で表示
+    # 画像（1.jpg）の表示
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(script_dir, "1.jpg")
+
+    if os.path.exists(image_path):
+        img_col1, img_col2 = st.columns([0.8, 0.2])
+        with img_col1:
+            st.image(image_path, use_container_width=True)
+    else:
+        st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
+
+# --- 新② タイトルを入力してください ---
+st.markdown("### ② タイトルを入力してください")
 custom_title_input = st.text_input(
     "タイトル入力欄",
     value="",
@@ -314,7 +312,7 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
     elif not target_url:
-        st.warning("GoogleマップのURLを入力してください。")
+        st.warning("道を選択するか、GoogleマップのURLを入力してください。")
     else:
         with st.spinner("URL解析中..."):
             expanded_url = resolve_short_url(target_url)
@@ -445,7 +443,6 @@ if "all_analysis_results" in st.session_state:
                 )
 
         if all_results:
-            # ルートが1〜2件の時でも画面幅いっぱいに肥大化しないよう常に最低3カラム確保
             num_columns = max(3, len(all_results))
             cols = st.columns(num_columns)
 
@@ -465,7 +462,6 @@ if "all_analysis_results" in st.session_state:
                     )
 
                     if combined_img:
-                        # ★ 画像長押しでの保存案内テキストを表示
                         st.markdown(
                             '<div style="font-size: 0.85rem; color: #555555; background-color: #f5f5f5; padding: 6px 10px; border-radius: 6px; border: 1px solid #dddddd; margin-bottom: 8px; text-align: center;">'
                             "📲 <b>画像を長押しして保存できます。</b>"
@@ -473,7 +469,6 @@ if "all_analysis_results" in st.session_state:
                             unsafe_allow_html=True,
                         )
 
-                        # 合成画像の表示
                         st.image(combined_img, use_container_width=True)
                     else:
                         st.error("画像の生成に失敗しました。")
@@ -563,11 +558,9 @@ if "all_analysis_results" in st.session_state:
             st_folium(m, width=900, height=450, key=f"interactive_map_route_{i}")
             st.markdown("---")
 
-        # 設定ファイルからの数値を動的に表示（定義パラメータ）
         max_angle = thresholds_default.get("max_straight_angle_change_deg", 15.0)
         min_len = int(thresholds_default.get("min_straight_length_m", 300))
 
-        # 分析定義パラメータの常時表示（太字なし・文字サイズ縮小・項目列の幅確保）
         st.markdown("### 🔍 分析パラメータ・各指標の判定基準")
         st.markdown(
             f"""
