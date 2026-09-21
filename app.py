@@ -147,6 +147,13 @@ st.markdown(
             background-color: transparent !important;
         }
 
+        /* ▼ ボタンのテキストを左寄せにする設定を追加 ▼ */
+        div[data-testid="stButton"] button {
+            justify-content: flex-start !important;
+            text-align: left !important;
+            padding-left: 20px !important;
+        }
+
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
@@ -163,6 +170,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 
 api_key_default, thresholds_default, scoring_weights = load_config()
 api_key = api_key_default
