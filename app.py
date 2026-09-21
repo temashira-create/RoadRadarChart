@@ -133,46 +133,32 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：プレースホルダー視認性向上・ブラックアウト完全回避・レスポンシブ化
+# ★ CSSの設定：レスポンシブ・レイアウト調整のみ適用
 st.markdown(
     """
     <style>
-        /* メインエリア全体の背景と余白調整（padding-topを0に設定して上部の空間を消去） */
+        /* メインエリアの余白調整 */
         .main .block-container {
-            background-color: #fffde7;
             padding-top: 0rem !important;
             padding-bottom: 1.5rem;
             padding-left: 1.5rem;
             padding-right: 1.5rem;
-            border-radius: 12px;
         }
-        /* アプリ全体の背景 */
-        .stApp {
-            background-color: #fefce8;
-        }
-        /* サイドバーを完全に隠す */
+        /* サイドバーを隠す */
         section[data-testid="stSidebar"] {
             display: none;
         }
-        /* Streamlitのコンテナやiframe背景の白を透明化 */
-        div[data-testid="stCustomComponentV1"], 
-        div[data-testid="stElementToolbar"],
-        .stHtml, iframe {
-            background-color: transparent !important;
-        }
-        /* ヘッダー（Deployボタン・メニュー）を完全に消去して高さを詰める */
+        /* ヘッダー・フッターの非表示化 */
         header[data-testid="stHeader"] {
             display: none !important;
         }
-        
-        /* フッター（Made with Streamlit）を非表示にする */
         footer {
             visibility: hidden !important;
             height: 0px !important;
             padding: 0px !important;
         }
 
-        /* スマホ向け見出しフォントサイズの微調整と改行防止 */
+        /* 見出しのスタイル調整 */
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
@@ -182,7 +168,7 @@ st.markdown(
             overflow-wrap: break-word;
         }
 
-        /* ★ PCで横並び・スマホで縦並びにする強制レスポンシブCSS */
+        /* スマホ向けレスポンシブ化 */
         @media (max-width: 768px) {
             div[data-testid="stColumn"] {
                 width: 100% !important;
