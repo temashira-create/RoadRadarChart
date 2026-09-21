@@ -22,7 +22,7 @@ SPOT_PRESETS = {
         "https://www.google.com/maps/dir/39.9227227,140.9764819/39.9725475,140.8052669/"
     ),
     "宮城：コバルトライン": (
-        "https://www.google.com/maps/dir/38.43500383790911,+141.44633077780648/38.40267251250418,+141.45259500107528/38.32521250918779,+141.51287317973953/38.2804423,141.5185324/@38.3578769,141.3218905,11z/data=!3m1!4b1!4m15!4m14!1m3!2m2!1d141.4463308!2d38.4350038!1m3!2m2!1d141.452595!2d38.4026725!1m3!2m2!1d141.5128732!2d38.3252125!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+        "https://www.google.com/maps/dir/38.43500383790911,+141.44633077780648/38.40267251250418,+141.45259500107528/38.32521250918779,+141.51287317973953/38.2804423,141.5185324/@38.3578769,141.3218905,11z/data=!3m1!4b1!4m15!4m14!1m3!2m2!1d141.4463308!2d38.4350038!1m3!2m2!1d141.452595!2d38.402672!1m3!2m2!1d141.5128732!2d38.325212!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "宮城/山形：蔵王エコーライン": (
         "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
@@ -260,8 +260,8 @@ if "selected_preset_key" not in st.session_state:
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 if "custom_title_input" not in st.session_state:
     st.session_state["custom_title_input"] = ""
-if "show_custom_input" not in st.session_state:
-    st.session_state["show_custom_input"] = False
+if "is_custom_mode" not in st.session_state:
+    st.session_state["is_custom_mode"] = False
 
 
 # --- コールバック関数の定義 ---
@@ -270,40 +270,27 @@ if "show_custom_input" not in st.session_state:
 def on_preset_select():
     selected = st.session_state.get("selected_preset_key")
     if selected in SPOT_PRESETS:
-        # URLを反映
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
-        # タイトルにプリセット名を自動入力
         st.session_state["custom_title_input"] = selected
-        st.session_state["show_custom_input"] = False
-    elif selected == "独自の経路を入力する↓":
-        # クリアして表示フラグを立てる
-        st.session_state["main_url_input"] = ""
-        st.session_state["custom_title_input"] = ""
-        st.session_state["show_custom_input"] = True
-
-
-# 2. 手動でURLが入力・変更されたとき
-def on_url_input_change():
-    current_title = st.session_state.get("custom_title_input", "")
-    # タイトル欄に入っている文字が「いずれかのプリセット名」と一致している場合はクリア
-    if current_title in SPOT_PRESETS:
-        st.session_state["custom_title_input"] = ""
+        st.session_state["is_custom_mode"] = False
 
 
 # --- 道を選択してください ---
 st.markdown("### 道を選択してください")
 
 # 選択肢の定義
-preset_options = (
-    ["-- 選択してください --"]
-    + list(SPOT_PRESETS.keys())
-    + ["独自の経路を入力する↓"]
-)
+preset_options = ["-- 選択してください --"] + list(SPOT_PRESETS.keys())
+
+# 現在の選択状態がプリセット内にあるか確認
+current_selected = st.session_state.get("selected_preset_key", "-- 選択してください --")
+if current_selected not in preset_options:
+    current_selected = "-- 選択してください --"
 
 # 1. プリセットセレクトボックス（バーを上に配置）
 selected_option = st.selectbox(
     "主要ワインディングプリセット",
     options=preset_options,
+    index=preset_options.index(current_selected) if current_selected in preset_options else 0,
     label_visibility="collapsed",
     key="selected_preset_key",
     on_change=on_preset_select,
@@ -311,17 +298,16 @@ selected_option = st.selectbox(
 
 # 2. 「👉 独自の経路を入力する」ボタン（バーのすぐ下に配置）
 if st.button("👉 独自の経路を入力する", use_container_width=True):
-    st.session_state["selected_preset_key"] = "独自の経路を入力する↓"
-    st.session_state["show_custom_input"] = True
+    st.session_state["is_custom_mode"] = True
     st.session_state["main_url_input"] = ""
     st.session_state["custom_title_input"] = ""
     st.rerun()
 
-# 選択肢の直接選択（契機①）またはボタン押下（契機②）のいずれかを判定
-is_custom_selected = (selected_option == "独自の経路を入力する↓") or st.session_state.get("show_custom_input", False)
+# 独自の経路入力モードが有効、またはセレクトボックスでカスタム設定になっている場合
+is_custom_active = st.session_state.get("is_custom_mode", False) or (selected_option not in SPOT_PRESETS and selected_option != "-- 選択してください --")
 
-# ★ 契機①または契機②を満たした場合にスーッと入力エリアを展開
-if is_custom_selected:
+# ★ 入力エリアの展開
+if is_custom_active:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
@@ -331,7 +317,6 @@ if is_custom_selected:
         placeholder="https://www.google.com/maps/dir/...",
         label_visibility="collapsed",
         key="main_url_input",
-        on_change=on_url_input_change,
     )
 
     # 「👉 URLをコピーする方法を見る」アコーディオン（画像収納）
