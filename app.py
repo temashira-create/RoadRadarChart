@@ -150,6 +150,12 @@ st.markdown(
         header[data-testid="stHeader"] { display: none !important; }
         footer { visibility: hidden !important; height: 0px !important; padding: 0px !important; }
 
+        /* ▼▼▼ リンクに表示される鎖（カプセル）マークを非表示にする ▼▼▼ */
+        a svg, .stMarkdown a svg {
+            display: none !important;
+        }
+        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+
         div[data-testid="stSelectbox"] > div > div,
         div[data-testid="stTextInput"] input {
             background-color: #f2f2f2 !important;
