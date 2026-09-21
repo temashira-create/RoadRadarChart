@@ -208,8 +208,6 @@ if "selected_preset_key" not in st.session_state:
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 if "custom_title_input" not in st.session_state:
     st.session_state["custom_title_input"] = ""
-if "is_custom_mode" not in st.session_state:
-    st.session_state["is_custom_mode"] = False
 
 
 # --- コールバック関数の定義 ---
@@ -218,9 +216,7 @@ def on_preset_select():
     if selected in SPOT_PRESETS:
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
         st.session_state["custom_title_input"] = selected
-        st.session_state["is_custom_mode"] = False
     elif selected == "👉 独自の経路を入力する↓":
-        st.session_state["is_custom_mode"] = True
         st.session_state["main_url_input"] = ""
         st.session_state["custom_title_input"] = ""
 
@@ -228,7 +224,6 @@ def on_preset_select():
 # --- 道を選択してください ---
 st.markdown("### 道を選択してください")
 
-# 選択肢の一番下に「独自の経路を入力する↓」を含める
 preset_options = (
     ["-- 選択してください --"]
     + list(SPOT_PRESETS.keys())
@@ -239,7 +234,6 @@ current_selected = st.session_state.get("selected_preset_key", "-- 選択して�
 if current_selected not in preset_options:
     current_selected = "-- 選択してください --"
 
-# セレクトボックス（一番下に独自の経路を含める）
 selected_option = st.selectbox(
     "主要ワインディングプリセット",
     options=preset_options,
@@ -249,14 +243,8 @@ selected_option = st.selectbox(
     on_change=on_preset_select,
 )
 
-# 独自の経路入力モードが有効、またはセレクトボックスで「独自の経路を入力する↓」が選ばれている場合
-is_custom_active = (
-    st.session_state.get("is_custom_mode", False)
-    or selected_option == "👉 独自の経路を入力する↓"
-)
-
-# ★ 入力エリアの展開
-if is_custom_active:
+# 「👉 独自の経路を入力する↓」が選択されている場合は常にカスタム入力欄を表示する
+if selected_option == "👉 独自の経路を入力する↓":
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
