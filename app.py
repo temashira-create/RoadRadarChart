@@ -133,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：レスポンシブ・レイアウト調整のみ適用
+# ★ CSSの設定：バー（入力コンテナ等）をグレーにしつつ全体のテーマを維持
 st.markdown(
     """
     <style>
@@ -156,6 +156,15 @@ st.markdown(
             visibility: hidden !important;
             height: 0px !important;
             padding: 0px !important;
+        }
+
+        /* ★ 入力バー・セレクトボックス・枠囲みエリアをグレー（#f0f0f0 等）に設定 */
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="input"] > div,
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stSelectbox"] > div {
+            background-color: #f2f2f2 !important;  /* お好みのグレー色（例: #e8e8e8 や #f2f2f2） */
+            border-radius: 8px !important;
         }
 
         /* 見出しのスタイル調整 */
