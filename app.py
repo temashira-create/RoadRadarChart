@@ -37,7 +37,7 @@ SPOT_PRESETS = {
         "https://www.google.com/maps/dir/35.4851117,138.7698783/35.3939787,138.7307626/"
     ),
     "【長野】ビーナスライン（白樺湖〜美ヶ原）": (
-        "https://www.google.com/maps/dir/36.103000,138.252000/36.225000,138.140000/"
+        "https://www.google.com/maps/dir/36.2183759,138.1411094/36.15023597920541,+138.14106974931596/36.110976385485344,+138.23882633673736/@36.1556956,138.0999304,12z/data=!3m1!4b1!4m11!4m10!1m0!1m3!2m2!1d138.1410697!2d36.150236!1m3!2m2!1d138.2388263!2d36.1109764!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "【静岡】伊豆スカイライン": (
         "https://www.google.com/maps/dir/35.1200052,139.0387769/34.9058489,139.0388753/"
@@ -501,7 +501,7 @@ if "all_analysis_results" in st.session_state:
                         # ★ 画像長押しでの保存案内テキストを表示
                         st.markdown(
                             '<div style="font-size: 0.85rem; color: #555555; background-color: #f5f5f5; padding: 6px 10px; border-radius: 6px; border: 1px solid #dddddd; margin-bottom: 8px; text-align: center;">'
-                            "📲 <b>画像を長押しして保存できます。</b><br><span style='font-size: 0.75rem; color: #777;'>(PCの場合は右クリック ➔ 名前を付けて画像を保存)</span>"
+                            "📲 <b>画像を長押しして保存できます。</b>"
                             "</div>",
                             unsafe_allow_html=True,
                         )
