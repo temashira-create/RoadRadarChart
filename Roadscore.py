@@ -150,7 +150,6 @@ def parse_google_maps_url(url):
         if "to:" in raw_daddr or "+to:" in raw_daddr:
             # プレースホルダや正規表現を使って to: で分割
             # ここではシンプルに "to:"（前後のプラスやスペースも含めて）でsplitするアプローチ
-            import re
             # to: の前後に挟まる空白や "+" を考慮して分割
             parts = re.split(r'[\+\s]*to:', raw_daddr)
             
