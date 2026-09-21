@@ -136,7 +136,7 @@ def parse_distance_km(route, metrics):
             if key in route and route[key]:
                 return float(route[key]) / 1000.0
         for key in ["distance_km", "distance_num"]:
-            if key in route and key in route: # safety fix
+            if key in route and route[key]:
                 return float(route[key])
 
         dist_str = str(route.get("distance", ""))
@@ -366,320 +366,327 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
     user_title = st.session_state.get("custom_title_input", "").strip()
     selected_preset = st.session_state.get("selected_preset_key", "")
 
+    # 解析実行時に即座にURLの展開・パースを行いセッションに保存（エラー時でも確認できるようにする）
+    expanded_url = expand_url(target_url) if target_url else ""
+    origin, destination, waypoints, matched_pattern = parse_google_maps_url(expanded_url) if expanded_url else ("", "", [], "")
+    
+    st.session_state["last_url_debug"] = {
+        "target_url": target_url,
+        "expanded_url": expanded_url,
+        "matched_pattern": matched_pattern,
+        "origin": origin,
+        "destination": destination,
+        "waypoints": waypoints
+    }
+
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
     elif not target_url:
         st.warning("道を選択するか、GoogleマップのURLを入力してください。")
-    else:
-        with st.spinner("URL展開・解析中..."):
-            expanded_url = expand_url(target_url)
-            origin, destination, waypoints, matched_pattern = parse_google_maps_url(expanded_url)
-            
-            # 抽出結果をセッション状態に保存（タブ上部にいつでも表示できるようにする）
-            st.session_state["last_url_debug"] = {
-                "target_url": target_url,
-                "expanded_url": expanded_url,
-                "matched_pattern": matched_pattern,
-                "origin": origin,
-                "destination": destination,
-                "waypoints": waypoints
-            }
-
-        if not origin or not destination:
-            st.error(
-                f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"
-            )
-        else:
-            with st.spinner("ルート候補を一括取得・解析中..."):
-                routes = get_all_routes_info(origin, destination, waypoints, api_key)
-
-            if not routes:
-                st.error("経路情報が取得できませんでした。")
-            else:
-                all_results = []
-
-                for i, route in enumerate(routes):
-                    if not user_title or user_title == "自動":
-                        image_title = route.get("summary", "")
-                    else:
-                        image_title = user_title
-
-                    coords = fetch_high_res_coords(route, api_key)
-
-                    sharp_curves, medium_curves, large_curves, straight_segments = (
-                        analyze_curves_and_straights(coords, thresholds_default)
-                    )
-
-                    elevations = get_elevation_data(coords, api_key)
-                    steep_slopes = analyze_steep_slopes(
-                        coords, elevations, thresholds_default
-                    )
-
-                    metrics = calculate_metrics_and_scores(
-                        route,
-                        sharp_curves,
-                        medium_curves,
-                        straight_segments,
-                        steep_slopes,
-                        scoring_weights,
-                    )
-
-                    combined_img, html_content = generate_route_image_memory(
-                        route,
-                        coords,
-                        sharp_curves,
-                        medium_curves,
-                        straight_segments,
-                        steep_slopes,
-                        thresholds_default,
-                        metrics,
-                        api_key,
-                        custom_summary=image_title,
-                    )
-
-                    if selected_preset in SPOT_PRESETS:
-                        clean_gmaps_url = SPOT_PRESETS[selected_preset]
-                    else:
-                        clean_gmaps_url = expanded_url if target_url else create_clean_gmaps_url(route, coords)
-
-                    distance_km = parse_distance_km(route, metrics)
-
-                    all_results.append({
-                        "route": route,
-                        "coords": coords,
-                        "sharp_curves": sharp_curves,
-                        "medium_curves": medium_curves,
-                        "large_curves": large_curves,
-                        "straight_segments": straight_segments,
-                        "steep_slopes": steep_slopes,
-                        "metrics": metrics,
-                        "default_summary": route.get("summary", ""),
-                        "image_title": image_title,
-                        "combined_img": combined_img,
-                        "html_content": html_content,
-                        "clean_gmaps_url": clean_gmaps_url,
-                        "distance_km": distance_km,
-                    })
-
-                st.session_state["all_analysis_results"] = all_results
-
-# --- 解析結果の表示 ---
-if "all_analysis_results" in st.session_state:
-    all_results = st.session_state["all_analysis_results"]
-
-    st.success(f"{len(all_results)}件のルート解析が完了しました！")
-
-    has_over_100km = any(res.get("distance_km", 0) > 100 for res in all_results)
-    if has_over_100km:
-        st.warning(
-            "⚠️ **注意事項**: 総走行距離が100kmを超えるルートが含まれています。"
-            "長距離ルートではデータ取得・計算の仕様上、解析精度（カーブ・勾配等の検出精度）が低下する場合があります。"
+    elif not origin or not destination:
+        st.error(
+            f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"
         )
+    else:
+        with st.spinner("ルート候補を一括取得・解析中..."):
+            routes = get_all_routes_info(origin, destination, waypoints, api_key)
 
-    # === タブ構成 ===
-    tab1, tab2 = st.tabs(["🖼️ 出力画像生成", "🗺️ インタラクティブマップ"])
+        if not routes:
+            st.error("経路情報が取得できませんでした。")
+        else:
+            all_results = []
 
-    # 共通で各タブの上部に「URL解析結果」を表示するセクションを設置
-    if "last_url_debug" in st.session_state:
-        dbg = st.session_state["last_url_debug"]
-        with st.expander("🔍 Google Maps URL 解析詳細情報（クリックで展開）", expanded=False):
-            st.markdown(
-                f"""
-                - **マッチしたURLパターン**: `{dbg['matched_pattern']}`
-                - **入力された元URL**: `{dbg['target_url']}`
-                - **展開後のURL**: `{dbg['expanded_url']}`
-                - **抽出された出発地**: `{dbg['origin']}`
-                - **抽出された目的地**: `{dbg['destination']}`
-                - **抽出された経由地**: `{dbg['waypoints']}`
-                """,
-                unsafe_allow_html=True,
-            )
+            for i, route in enumerate(routes):
+                if not user_title or user_title == "自動":
+                    image_title = route.get("summary", "")
+                else:
+                    image_title = user_title
 
-    with tab1:
-        header_col1, header_col2 = st.columns([1, 1])
+                coords = fetch_high_res_coords(route, api_key)
 
-        with header_col1:
-            st.subheader("合成画像出力一覧（SNS共有用）")
-
-        with header_col2:
-            if all_results and "clean_gmaps_url" in all_results[0]:
-                common_gmaps_url = all_results[0]["clean_gmaps_url"]
-                
-                short_gmaps_url = shorten_url(common_gmaps_url)
-
-                route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{short_gmaps_url}"
-                encoded_route_share_text = urllib.parse.quote(route_share_text)
-                route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
-
-                st.markdown(
-                    f"""
-                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: flex-start; padding-bottom: 10px;">
-                        <a href="{common_gmaps_url}" target="_blank" style="
-                            background-color: #4285F4; color: white; padding: 6px 12px; border-radius: 6px;
-                            text-decoration: none; font-size: 12px; font-weight: bold; white-space: nowrap;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                        ">🗺️ Google Maps表示</a>
-                        <a href="{route_x_share_url}" target="_blank" style="
-                            background-color: #000000; color: white; padding: 6px 12px; border-radius: 6px;
-                            text-decoration: none; font-size: 12px; font-weight: bold; white-space: nowrap;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                        ">𝕏 ルートをXで共有</a>
-                        <span style="font-size: 11px; color: #666; white-space: nowrap;">※ルートは一致しないことがあります</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+                sharp_curves, medium_curves, large_curves, straight_segments = (
+                    analyze_curves_and_straights(coords, thresholds_default)
                 )
 
-        if all_results:
-            num_columns = max(3, len(all_results))
-            cols = st.columns(num_columns)
+                elevations = get_elevation_data(coords, api_key)
+                steep_slopes = analyze_steep_slopes(
+                    coords, elevations, thresholds_default
+                )
 
-            for i, res in enumerate(all_results):
-                default_summary = res["default_summary"]
-                combined_img = res["combined_img"]
+                metrics = calculate_metrics_and_scores(
+                    route,
+                    sharp_curves,
+                    medium_curves,
+                    straight_segments,
+                    steep_slopes,
+                    scoring_weights,
+                )
 
-                with cols[i]:
+                combined_img, html_content = generate_route_image_memory(
+                    route,
+                    coords,
+                    sharp_curves,
+                    medium_curves,
+                    straight_segments,
+                    steep_slopes,
+                    thresholds_default,
+                    metrics,
+                    api_key,
+                    custom_summary=image_title,
+                )
+
+                if selected_preset in SPOT_PRESETS:
+                    clean_gmaps_url = SPOT_PRESETS[selected_preset]
+                else:
+                    clean_gmaps_url = expanded_url if target_url else create_clean_gmaps_url(route, coords)
+
+                distance_km = parse_distance_km(route, metrics)
+
+                all_results.append({
+                    "route": route,
+                    "coords": coords,
+                    "sharp_curves": sharp_curves,
+                    "medium_curves": medium_curves,
+                    "large_curves": large_curves,
+                    "straight_segments": straight_segments,
+                    "steep_slopes": steep_slopes,
+                    "metrics": metrics,
+                    "default_summary": route.get("summary", ""),
+                    "image_title": image_title,
+                    "combined_img": combined_img,
+                    "html_content": html_content,
+                    "clean_gmaps_url": clean_gmaps_url,
+                    "distance_km": distance_km,
+                })
+
+            st.session_state["all_analysis_results"] = all_results
+
+# --- 解析結果の表示（あるいはURL入力後の状態保持） ---
+# 解析ボタンが一度でも押されてURL解析データがある場合は、タブ領域を常に表示する
+if "last_url_debug" in st.session_state:
+    
+    # === タブ構成（「出力画像生成」「インタラクティブマップ」の横に「URL解析詳細」タブを追加） ===
+    tab1, tab2, tab3 = st.tabs(["🖼️ 出力画像生成", "🗺️ インタラクティブマップ", "🔍 URL解析詳細"])
+
+    # 1. 🔍 URL解析詳細タブ（エラー時・成功時問わずいつでも詳細を確認可能）
+    with tab3:
+        st.subheader("Google Maps URL 解析詳細情報")
+        dbg = st.session_state["last_url_debug"]
+        st.markdown(
+            f"""
+            - **マッチしたURLパターン**: `{dbg['matched_pattern']}`
+            - **入力された元URL**: `{dbg['target_url']}`
+            - **展開後のURL**: `{dbg['expanded_url']}`
+            - **抽出された出発地**: `{dbg['origin']}`
+            - **抽出された目的地**: `{dbg['destination']}`
+            - **抽出された経由地**: `{dbg['waypoints']}`
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # 2. 🖼️ 出力画像生成タブ
+    with tab1:
+        if "all_analysis_results" in st.session_state:
+            all_results = st.session_state["all_analysis_results"]
+            st.success(f"{len(all_results)}件のルート解析が完了しました！")
+
+            has_over_100km = any(res.get("distance_km", 0) > 100 for res in all_results)
+            if has_over_100km:
+                st.warning(
+                    "⚠️ **注意事項**: 総走行距離が100kmを超えるルートが含まれています。"
+                    "長距離ルートではデータ取得・計算の仕様上、解析精度（カーブ・勾配等の検出精度）が低下する場合があります。"
+                )
+
+            header_col1, header_col2 = st.columns([1, 1])
+
+            with header_col1:
+                st.subheader("合成画像出力一覧（SNS共有用）")
+
+            with header_col2:
+                if all_results and "clean_gmaps_url" in all_results[0]:
+                    common_gmaps_url = all_results[0]["clean_gmaps_url"]
+                    short_gmaps_url = shorten_url(common_gmaps_url)
+
+                    route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{short_gmaps_url}"
+                    encoded_route_share_text = urllib.parse.quote(route_share_text)
+                    route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
+
                     st.markdown(
                         f"""
-                        <div style="min-height: 45px; margin-bottom: 4px;">
-                            <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
-                            <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: flex-start; padding-bottom: 10px;">
+                            <a href="{common_gmaps_url}" target="_blank" style="
+                                background-color: #4285F4; color: white; padding: 6px 12px; border-radius: 6px;
+                                text-decoration: none; font-size: 12px; font-weight: bold; white-space: nowrap;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                            ">🗺️ Google Maps表示</a>
+                            <a href="{route_x_share_url}" target="_blank" style="
+                                background-color: #000000; color: white; padding: 6px 12px; border-radius: 6px;
+                                text-decoration: none; font-size: 12px; font-weight: bold; white-space: nowrap;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                            ">𝕏 ルートをXで共有</a>
+                            <span style="font-size: 11px; color: #666; white-space: nowrap;">※ルートは一致しないことがあります</span>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
 
-                    if combined_img:
+            if all_results:
+                num_columns = max(3, len(all_results))
+                cols = st.columns(num_columns)
+
+                for i, res in enumerate(all_results):
+                    default_summary = res["default_summary"]
+                    combined_img = res["combined_img"]
+
+                    with cols[i]:
                         st.markdown(
-                            '<div style="font-size: 0.85rem; color: #555555; background-color: #f5f5f5; padding: 6px 10px; border-radius: 6px; border: 1px solid #dddddd; margin-bottom: 8px; text-align: center;">'
-                            "📲 <b>画像を長押しして保存できます。</b>"
-                            "</div>",
+                            f"""
+                            <div style="min-height: 45px; margin-bottom: 4px;">
+                                <h3 style="margin: 0 0 2px 0; font-size: 1.1rem;">ルート {i+1}</h3>
+                                <div style="font-weight: bold; font-size: 1.0rem; color: #333;">{default_summary}</div>
+                            </div>
+                            """,
                             unsafe_allow_html=True,
                         )
 
-                        st.image(combined_img, use_container_width=True)
-                    else:
-                        st.error("画像の生成に失敗しました。")
+                        if combined_img:
+                            st.markdown(
+                                '<div style="font-size: 0.85rem; color: #555555; background-color: #f5f5f5; padding: 6px 10px; border-radius: 6px; border: 1px solid #dddddd; margin-bottom: 8px; text-align: center;">'
+                                "📲 <b>画像を長押しして保存できます。</b>"
+                                "</div>",
+                                unsafe_allow_html=True,
+                            )
 
-                    st.markdown("<br>", unsafe_allow_html=True)
+                            st.image(combined_img, use_container_width=True)
+                        else:
+                            st.error("画像の生成に失敗しました。")
 
+                        st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.info("「全ルート一括解析を実行」ボタンを押すと、ここに結果が表示されます。")
+
+    # 3. 🗺️ インタラクティブマップタブ
     with tab2:
-        st.subheader("分析マップ（ルート別個別表示）")
+        if "all_analysis_results" in st.session_state:
+            all_results = st.session_state["all_analysis_results"]
+            st.subheader("分析マップ（ルート別個別表示）")
 
-        for i, res in enumerate(all_results):
-            default_summary = res["default_summary"]
-            distance = res["route"]["distance"]
-            duration = res["route"]["duration"]
+            for i, res in enumerate(all_results):
+                default_summary = res["default_summary"]
+                distance = res["route"]["distance"]
+                duration = res["route"]["duration"]
 
+                st.markdown(
+                    f"### 📍 ルート {i+1}: {default_summary} ({distance} / {duration})"
+                )
+
+                coords = res["coords"]
+                start_lat, start_lng = coords[0]
+
+                m = folium.Map(location=[start_lat, start_lng], zoom_start=11)
+
+                folium.PolyLine(
+                    coords, color="blue", weight=4, opacity=0.7, popup=f"ルート {i+1}"
+                ).add_to(m)
+
+                for seg in res["straight_segments"]:
+                    folium.PolyLine(
+                        seg["coords"], color="green", weight=5, opacity=0.7
+                    ).add_to(m)
+
+                for slope in res["steep_slopes"]:
+                    folium.PolyLine(
+                        slope["coords"], color="darkviolet", weight=6, opacity=0.7
+                    ).add_to(m)
+
+                for pt in res.get("sharp_curves", []):
+                    folium.CircleMarker(
+                        [pt[0], pt[1]],
+                        radius=6,
+                        color="crimson",
+                        fill=True,
+                        fill_color="crimson",
+                        popup="ヘアピンコーナー",
+                    ).add_to(m)
+
+                for pt in res.get("medium_curves", []):
+                    folium.CircleMarker(
+                        [pt[0], pt[1]],
+                        radius=4,
+                        color="darkorange",
+                        fill=True,
+                        fill_color="darkorange",
+                        popup="中速コーナー",
+                    ).add_to(m)
+
+                for pt in res.get("large_curves", []):
+                    folium.CircleMarker(
+                        [pt[0], pt[1]],
+                        radius=4,
+                        color="dodgerblue",
+                        fill=True,
+                        fill_color="dodgerblue",
+                        popup="緩大コーナー (R=200m~400m)",
+                    ).add_to(m)
+
+                legend_html = """
+                <div style="
+                    position: fixed; 
+                    bottom: 30px; right: 20px; width: 160px;
+                    background-color: rgba(255, 255, 255, 0.9);
+                    border:2px solid grey; z-index:9999; font-size:13px;
+                    padding: 10px; border-radius: 8px; box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+                    font-family: sans-serif;
+                ">
+                    <b>📍 マップ凡例</b><br>
+                    <i style="background: green; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> 直線区間<br>
+                    <i style="background: darkviolet; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> 激坂区間<br>
+                    <i style="background: crimson; width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 7px;"></i> ヘアピン<br>
+                    <i style="background: darkorange; width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 7px;"></i> 中速コーナー<br>
+                    <i style="background: dodgerblue; width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 7px;"></i> 緩大コーナー
+                </div>
+                """
+                m.get_root().html.add_child(folium.Element(legend_html))
+
+                st_folium(m, width=900, height=450, key=f"interactive_map_route_{i}")
+                st.markdown("---")
+
+            max_angle = thresholds_default.get("max_straight_angle_change_deg", 15.0)
+            min_len = int(thresholds_default.get("min_straight_length_m", 300))
+
+            st.markdown("### 🔍 分析パラメータ・各指標の判定基準")
             st.markdown(
-                f"### 📍 ルート {i+1}: {default_summary} ({distance} / {duration})"
+                f"""
+                <style>
+                    .param-table {{
+                        font-size: 0.9rem;
+                        line-height: 1.6;
+                        border-collapse: collapse;
+                        width: 100%;
+                    }}
+                    .param-table td {{
+                        padding: 4px 8px;
+                        border-bottom: 1px solid #ddd;
+                    }}
+                    .param-table .col-item {{
+                        white-space: nowrap;
+                        min-width: 140px;
+                        font-weight: normal;
+                    }}
+                </style>
+                <table class="param-table">
+                    <tr><td class="col-item">🔴 ヘアピン</td><td>曲率半径 R < 80m のコーナー</td></tr>
+                    <tr><td class="col-item">🟠 中速コーナー</td><td>曲率半径 80m ≤ R < 200m のコーナー</td></tr>
+                    <tr><td class="col-item">🟢 ストレート</td><td>角度{max_angle}°以内で{min_len}m以上続く区間</td></tr>
+                    <tr><td class="col-item">🟣 激坂(上下)</td><td>勾配斜度 ±8% 以上</td></tr>
+                    <tr><td class="col-item">⚪ 総走行距離</td><td>Google情報の総走行距離(km)</td></tr>
+                    <tr><td class="col-item">⚪ 平均速度</td><td>Google情報の総走行距離(km) ÷ Google情報の所要時間(h)</td></tr>
+                </table>
+                """,
+                unsafe_allow_html=True,
             )
-
-            coords = res["coords"]
-            start_lat, start_lng = coords[0]
-
-            m = folium.Map(location=[start_lat, start_lng], zoom_start=11)
-
-            folium.PolyLine(
-                coords, color="blue", weight=4, opacity=0.7, popup=f"ルート {i+1}"
-            ).add_to(m)
-
-            for seg in res["straight_segments"]:
-                folium.PolyLine(
-                    seg["coords"], color="green", weight=5, opacity=0.7
-                ).add_to(m)
-
-            for slope in res["steep_slopes"]:
-                folium.PolyLine(
-                    slope["coords"], color="darkviolet", weight=6, opacity=0.7
-                ).add_to(m)
-
-            for pt in res.get("sharp_curves", []):
-                folium.CircleMarker(
-                    [pt[0], pt[1]],
-                    radius=6,
-                    color="crimson",
-                    fill=True,
-                    fill_color="crimson",
-                    popup="ヘアピンコーナー",
-                ).add_to(m)
-
-            for pt in res.get("medium_curves", []):
-                folium.CircleMarker(
-                    [pt[0], pt[1]],
-                    radius=4,
-                    color="darkorange",
-                    fill=True,
-                    fill_color="darkorange",
-                    popup="中速コーナー",
-                ).add_to(m)
-
-            for pt in res.get("large_curves", []):
-                folium.CircleMarker(
-                    [pt[0], pt[1]],
-                    radius=4,
-                    color="dodgerblue",
-                    fill=True,
-                    fill_color="dodgerblue",
-                    popup="緩大コーナー (R=200m~400m)",
-                ).add_to(m)
-
-            legend_html = """
-            <div style="
-                position: fixed; 
-                bottom: 30px; right: 20px; width: 160px;
-                background-color: rgba(255, 255, 255, 0.9);
-                border:2px solid grey; z-index:9999; font-size:13px;
-                padding: 10px; border-radius: 8px; box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-                font-family: sans-serif;
-            ">
-                <b>📍 マップ凡例</b><br>
-                <i style="background: green; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> 直線区間<br>
-                <i style="background: darkviolet; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> 激坂区間<br>
-                <i style="background: crimson; width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 7px;"></i> ヘアピン<br>
-                <i style="background: darkorange; width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 7px;"></i> 中速コーナー<br>
-                <i style="background: dodgerblue; width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 7px;"></i> 緩大コーナー
-            </div>
-            """
-            m.get_root().html.add_child(folium.Element(legend_html))
-
-            st_folium(m, width=900, height=450, key=f"interactive_map_route_{i}")
-            st.markdown("---")
-
-        max_angle = thresholds_default.get("max_straight_angle_change_deg", 15.0)
-        min_len = int(thresholds_default.get("min_straight_length_m", 300))
-
-        st.markdown("### 🔍 分析パラメータ・各指標の判定基準")
-        st.markdown(
-            f"""
-            <style>
-                .param-table {{
-                    font-size: 0.9rem;
-                    line-height: 1.6;
-                    border-collapse: collapse;
-                    width: 100%;
-                }}
-                .param-table td {{
-                    padding: 4px 8px;
-                    border-bottom: 1px solid #ddd;
-                }}
-                .param-table .col-item {{
-                    white-space: nowrap;
-                    min-width: 140px;
-                    font-weight: normal;
-                }}
-            </style>
-            <table class="param-table">
-                <tr><td class="col-item">🔴 ヘアピン</td><td>曲率半径 R < 80m のコーナー</td></tr>
-                <tr><td class="col-item">🟠 中速コーナー</td><td>曲率半径 80m ≤ R < 200m のコーナー</td></tr>
-                <tr><td class="col-item">🟢 ストレート</td><td>角度{max_angle}°以内で{min_len}m以上続く区間</td></tr>
-                <tr><td class="col-item">🟣 激坂(上下)</td><td>勾配斜度 ±8% 以上</td></tr>
-                <tr><td class="col-item">⚪ 総走行距離</td><td>Google情報の総走行距離(km)</td></tr>
-                <tr><td class="col-item">⚪ 平均速度</td><td>Google情報の総走行距離(km) ÷ Google情報の所要時間(h)</td></tr>
-            </table>
-            """,
-            unsafe_allow_html=True,
-        )
+        else:
+            st.info("「全ルート一括解析を実行」ボタンを押すと、ここにマップが表示されます。")
 
 # --- フッター（ツール開発者） ---
 st.markdown("<br><hr>", unsafe_allow_html=True)
@@ -728,7 +735,7 @@ if os.path.exists(footer_image_path):
 
         st.markdown(
             """
-            <div style="font-size: 0.9root; line-height: 1.7; color: #333; margin-top: 8px;">
+            <div style="font-size: 0.9rem; line-height: 1.7; color: #333; margin-top: 8px;">
                 非営利なので、やれることには限界があるけど、頑張ります。<br>
                 <span style="color: #777; font-size: 0.85rem;">2026/9/21</span>
             </div>
