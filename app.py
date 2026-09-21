@@ -127,7 +127,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：ダークモード対策 ＆ レスポンシブ化 ＆ expander枠線同色・透明化指定
+# ★ CSSの設定：ダークモード対策 ＆ 入力バー等の可視性（グレー化）強化 ＆ レスポンシブ化
 st.markdown(
     """
     <style>
@@ -146,10 +146,34 @@ st.markdown(
         
         /* 見出し・段落・ラベル・ボタン内等のテキスト色を固定 */
         h1, h2, h3, h4, h5, h6, p, label, span, div {
-            color: #333333;
+            color: #333333 !important;
         }
 
-        /* expander（👉 デフォルトのルートから選択してみる）の枠線・背景色を完全に消去 */
+        /* ★ ダークモード時でも入力フォームが黒く潰れないよう明るいグレー＆可視テキストに強制オーバーライド */
+        input[type="text"], 
+        div[data-baseweb="input"], 
+        div[data-baseweb="select"], 
+        div[data-baseweb="select"] > div,
+        ul[data-baseweb="menu"],
+        li[data-baseweb="option"] {
+            background-color: #f0f0f0 !important;
+            color: #222222 !important;
+            border-color: #cccccc !important;
+        }
+
+        /* ドロップダウンメニューのポップアップ全体と選択肢テキストの調整 */
+        div[data-baseweb="popover"], ul[role="listbox"] {
+            background-color: #ffffff !important;
+        }
+        li[role="option"] {
+            background-color: #ffffff !important;
+            color: #222222 !important;
+        }
+        li[role="option"]:hover {
+            background-color: #e0e0e0 !important;
+        }
+
+        /* expander（👉 タップして選択）の枠線・背景色を完全に消去 */
         div[data-testid="stExpander"], 
         details[data-testid="stExpander"],
         div[data-testid="stExpander"] > div,
@@ -294,8 +318,8 @@ url_input = st.text_input(
     key="main_url_input",
 )
 
-# 2. 枠線を無効化・同色化指定したアコーディオン
-with st.expander("👉 デフォルトのルートから選択してみる"):
+# 2. 「👉 タップして選択」へ文言変更したアコーディオン
+with st.expander("👉 タップして選択"):
     st.selectbox(
         "主要ワインディングプリセット",
         options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
@@ -306,9 +330,10 @@ with st.expander("👉 デフォルトのルートから選択してみる"):
 
 # --- ③ 見出し ＆ タイトル入力 ---
 st.markdown("### ③ タイトルを入力してください")
+# valueは空文字列にし、初期からプレースホルダー（グレー文字）で表示
 custom_title_input = st.text_input(
     "タイトル入力欄",
-    value="自動",
+    value="",
     placeholder="未入力の場合は自動で設定されます",
     label_visibility="collapsed",
 )
@@ -343,6 +368,7 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                 user_title = custom_title_input.strip()
 
                 for i, route in enumerate(routes):
+                    # タイトル未入力（空欄）または「自動」の場合はルートのサマリーを使用
                     if not user_title or user_title == "自動":
                         image_title = route.get("summary", "")
                     else:
