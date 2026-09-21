@@ -133,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：セレクトボックス（内部要素含む）およびテキスト入力欄を確実にグレー化
+# ★ CSSの設定：セレクトボックスおよびテキスト入力欄をグレー化
 st.markdown(
     """
     <style>
@@ -169,12 +169,6 @@ st.markdown(
         /* セレクトボックス内部の文字表示エリアの背景を透明にして下のグレーを透かせる */
         div[data-testid="stSelectbox"] [role="combobox"] {
             background-color: transparent !important;
-        }
-            
-        /* セレクトボックス枠線の調整 */
-        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-        div[data-testid="stTextInput"] input {
-            border: 1px solid #e0e0e0 !important;
         }
 
         /* 見出しのスタイル調整 */
@@ -271,32 +265,42 @@ def on_preset_select():
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
         # タイトルにプリセット名を自動入力
         st.session_state["custom_title_input"] = selected
+    elif selected == "独自の経路を入力する↓":
+        # クリア
+        st.session_state["main_url_input"] = ""
+        st.session_state["custom_title_input"] = ""
 
 
 # 2. 手動でURLが入力・変更されたとき
 def on_url_input_change():
-    # 選択ボックスをデフォルトに戻す
-    st.session_state["selected_preset_key"] = "-- 選択してください --"
-
     current_title = st.session_state.get("custom_title_input", "")
     # タイトル欄に入っている文字が「いずれかのプリセット名」と一致している場合はクリア
     if current_title in SPOT_PRESETS:
         st.session_state["custom_title_input"] = ""
 
+
 # --- 道を選択してください ---
 st.markdown("### 道を選択してください")
 
-# 1. プリセットセレクトボックス
-st.selectbox(
+# 選択肢の末尾に「独自の経路を入力する↓」を追加
+preset_options = (
+    ["-- 選択してください --"]
+    + list(SPOT_PRESETS.keys())
+    + ["独自の経路を入力する↓"]
+)
+
+# プリセットセレクトボックス
+selected_option = st.selectbox(
     "主要ワインディングプリセット",
-    options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
+    options=preset_options,
     label_visibility="collapsed",
     key="selected_preset_key",
     on_change=on_preset_select,
 )
 
-# 2. メインアコーディオン「👉 独自の経路を入力する」
-with st.expander("👉 独自の経路を入力する"):
+# 「独自の経路を入力する↓」が選択されている場合、手動入力エリアを表示
+if selected_option == "独自の経路を入力する↓":
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
     # 手動URL入力バー
@@ -308,21 +312,19 @@ with st.expander("👉 独自の経路を入力する"):
         on_change=on_url_input_change,
     )
 
-    # 入れ子のアコーディオン「👉 URLをコピーする方法を見る」
+    # 「👉 URLをコピーする方法を見る」アコーディオン
     with st.expander("👉 URLをコピーする方法を見る"):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         image_path = os.path.join(script_dir, "1.jpg")
 
         if os.path.exists(image_path):
-            img_col1, img_col2 = st.columns([0.8, 0.2])
+            img_col1, _ = st.columns([0.8, 0.2])
             with img_col1:
                 st.image(image_path, use_container_width=True)
         else:
             st.info(f"※ 画像ファイル (1.jpg) が見つかりません。参照パス: {image_path}")
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # タイトル入力セクション（アコーディオン内に収納）
     st.markdown("<b>タイトルを入力してください</b>", unsafe_allow_html=True)
     st.text_input(
         "タイトル入力欄",
