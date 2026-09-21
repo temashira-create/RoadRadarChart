@@ -136,7 +136,7 @@ def parse_distance_km(route, metrics):
             if key in route and route[key]:
                 return float(route[key]) / 1000.0
         for key in ["distance_km", "distance_num"]:
-            if key in route and route[key]:
+            if key in route and key in route: # safety fix
                 return float(route[key])
 
         dist_str = str(route.get("distance", ""))
@@ -372,26 +372,24 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
         st.warning("道を選択するか、GoogleマップのURLを入力してください。")
     else:
         with st.spinner("URL展開・解析中..."):
-            # Roadscore.py 側の expand_url を使用してスマホの短縮URLを確実に展開
             expanded_url = expand_url(target_url)
-            # 4つ目の要素（どのパターンを通ったか）も一緒に受け取るように変更
             origin, destination, waypoints, matched_pattern = parse_google_maps_url(expanded_url)
-        # デバッグ表示をここでパワーアップ！
-        # 折りたたみ式にすることで、消えずにいつでも確認・展開できるようにする
-        with st.expander("🔍 解析詳細（クリックして展開）", expanded=False):
-            st.write(f"- **通過したパターン**: {matched_pattern}")
-            st.write(f"- **展開されたURL**: `{expanded_url}`")
-            st.write(f"- **抽出された出発地**: `{origin}`")
-            st.write(f"- **抽出された目的地**: `{destination}`")
-            st.write(f"- **抽出された経由地**: `{waypoints}`")
+            
+            # 抽出結果をセッション状態に保存（タブ上部にいつでも表示できるようにする）
+            st.session_state["last_url_debug"] = {
+                "target_url": target_url,
+                "expanded_url": expanded_url,
+                "matched_pattern": matched_pattern,
+                "origin": origin,
+                "destination": destination,
+                "waypoints": waypoints
+            }
+
         if not origin or not destination:
             st.error(
                 f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"
             )
         else:
-            # === デバッグ用：何が出発地・目的地として渡されているか画面に出す ===
-            st.warning(f"【解析】抽出された出発地: {origin} / 目的地: {destination} / 経由地: {waypoints}")
-
             with st.spinner("ルート候補を一括取得・解析中..."):
                 routes = get_all_routes_info(origin, destination, waypoints, api_key)
 
@@ -478,7 +476,24 @@ if "all_analysis_results" in st.session_state:
             "長距離ルートではデータ取得・計算の仕様上、解析精度（カーブ・勾配等の検出精度）が低下する場合があります。"
         )
 
+    # === タブ構成 ===
     tab1, tab2 = st.tabs(["🖼️ 出力画像生成", "🗺️ インタラクティブマップ"])
+
+    # 共通で各タブの上部に「URL解析結果」を表示するセクションを設置
+    if "last_url_debug" in st.session_state:
+        dbg = st.session_state["last_url_debug"]
+        with st.expander("🔍 Google Maps URL 解析詳細情報（クリックで展開）", expanded=False):
+            st.markdown(
+                f"""
+                - **マッチしたURLパターン**: `{dbg['matched_pattern']}`
+                - **入力された元URL**: `{dbg['target_url']}`
+                - **展開後のURL**: `{dbg['expanded_url']}`
+                - **抽出された出発地**: `{dbg['origin']}`
+                - **抽出された目的地**: `{dbg['destination']}`
+                - **抽出された経由地**: `{dbg['waypoints']}`
+                """,
+                unsafe_allow_html=True,
+            )
 
     with tab1:
         header_col1, header_col2 = st.columns([1, 1])
@@ -692,7 +707,7 @@ if os.path.exists(footer_image_path):
                 このツールはGeminiにpythonを書いてもらって作りました。<br>
                 １日の実行回数制限を設けることで完全無料で動いていますので安心してお使いください。<br><br>
                 バグなどあればXのメンションで教えてもらえると助かります。<br>
-                デフォルトの道に加えてほしい道も教えてもらえると嬉しいです！
+                フォルトの道に加えてほしい道も教えてもらえると嬉しいです！
             </div>
             """,
             unsafe_allow_html=True,
@@ -713,7 +728,7 @@ if os.path.exists(footer_image_path):
 
         st.markdown(
             """
-            <div style="font-size: 0.9rem; line-height: 1.7; color: #333; margin-top: 8px;">
+            <div style="font-size: 0.9root; line-height: 1.7; color: #333; margin-top: 8px;">
                 非営利なので、やれることには限界があるけど、頑張ります。<br>
                 <span style="color: #777; font-size: 0.85rem;">2026/9/21</span>
             </div>
