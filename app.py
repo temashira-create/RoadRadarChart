@@ -5,7 +5,7 @@ import urllib.parse
 import folium
 from PIL import Image
 import requests
-# Roadscore.py からすべての関数を読み込む
+# Roadscore.py からすべての関数を読み込む（expand_url もここに含まれます）
 from Roadscore import *
 import streamlit as st
 from streamlit_folium import st_folium
@@ -67,23 +67,6 @@ SPOT_PRESETS = {
         "https://www.google.com/maps/dir/33.2470522,131.2919401/32.939607,131.1175302/"
     ),
 }
-
-
-def resolve_short_url(url):
-    if "maps.app.goo.gl" in url or "goo.gl" in url:
-        try:
-            headers = {
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                    " (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                )
-            }
-            response = requests.get(url, headers=headers, allow_redirects=True)
-            return response.url
-        except Exception as e:
-            st.error(f"短縮URLの展開中にエラーが発生しました: {e}")
-            return url
-    return url
 
 
 def shorten_url(long_url):
@@ -355,13 +338,14 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
     elif not target_url:
         st.warning("道を選択するか、GoogleマップのURLを入力してください。")
     else:
-        with st.spinner("URL解析中..."):
-            expanded_url = resolve_short_url(target_url)
+        with st.spinner("URL展開・解析中..."):
+            # Roadscore.py 側の expand_url を使用してスマホの短縮URLを確実に展開
+            expanded_url = expand_url(target_url)
             origin, destination, waypoints = parse_google_maps_url(expanded_url)
 
         if not origin or not destination:
             st.error(
-                "入力されたURLから有効な「出発地」および「目的地」を検出できませんでした。"
+                f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"
             )
         else:
             with st.spinner("ルート候補を一括取得・解析中..."):
@@ -411,7 +395,6 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                         custom_summary=image_title,
                     )
 
-                    # プリセットならそのURL、カスタムならユーザーが入力したURL（展開後）を保持する
                     if selected_preset in SPOT_PRESETS:
                         clean_gmaps_url = SPOT_PRESETS[selected_preset]
                     else:
@@ -463,7 +446,6 @@ if "all_analysis_results" in st.session_state:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
                 
-                # ユーザーが入力した長大なURLやプリセットURLもここで短縮
                 short_gmaps_url = shorten_url(common_gmaps_url)
 
                 route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{short_gmaps_url}"
@@ -641,12 +623,11 @@ if "all_analysis_results" in st.session_state:
         )
 
 # --- フッター（ツール開発者） ---
-# 見切り線の上に約3行分の改行クリアランスを確保
-st.markdown("<br><br><br><hr>", unsafe_allow_html=True)
+st.markdown("<br><hr>", unsafe_allow_html=True)
+st.markdown("### ツール開発者")
 
 footer_image_path = os.path.join(script_dir, "2.png")
 
-# X（Twitter）メンション付き投稿画面用のリンクテキスト作成
 footer_x_text = (
     "RoadRadarChartについて連絡です！\n"
     "@sudenohito\n"
@@ -660,11 +641,10 @@ if os.path.exists(footer_image_path):
     with f_col1:
         st.image(footer_image_path, use_container_width=True)
     with f_col2:
-        # 「ツール開発者 素手の人」を見出しとして配置
         st.markdown(
             """
             <div style="font-size: 0.9rem; line-height: 1.7; color: #333;">
-                <h3 style="margin: 0 0 8px 0; font-size: 1.2rem;">ツール開発者 素手の人</h3>
+                <b>素手の人</b><br>
                 このツールはGeminiにpythonを書いてもらって作りました。<br>
                 １日の実行回数制限を設けることで完全無料で動いていますので安心してお使いください。<br><br>
                 バグなどあればXのメンションで教えてもらえると助かります。<br>
@@ -674,7 +654,6 @@ if os.path.exists(footer_image_path):
             unsafe_allow_html=True,
         )
         
-        # Xメンション付き投稿ボタン
         st.markdown(
             f"""
             <div style="margin: 10px 0;">

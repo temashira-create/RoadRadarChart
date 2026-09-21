@@ -98,11 +98,16 @@ def archive_old_outputs(base_dir):
 
 def expand_url(short_url):
     """短縮URLの展開（User-Agentを指定してリダイレクト崩れを防止）"""
+    if not short_url or "maps.app.goo.gl" not in short_url and "goo.gl" not in short_url:
+        return short_url
+        
     headers = {
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
     }
     try:
+        # 複数回のリダイレクトや履歴をしっかり追う
         response = requests.get(short_url, headers=headers, allow_redirects=True, timeout=10)
+        # 最終的なURLを返す
         return response.url
     except Exception as e:
         print(f"URL展開エラー: {e}")
