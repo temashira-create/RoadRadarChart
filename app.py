@@ -36,7 +36,7 @@ SPOT_PRESETS = {
     "【山梨】富士スバルライン": (
         "https://www.google.com/maps/dir/35.4851117,138.7698783/35.3939787,138.7307626/"
     ),
-    "【長野】ビーナスライン（白樺湖〜美ヶ原）": (
+    "【長野】ビーナスライン": (
         "https://www.google.com/maps/dir/36.2183759,138.1411094/36.15023597920541,+138.14106974931596/36.110976385485344,+138.23882633673736/@36.1556956,138.0999304,12z/data=!3m1!4b1!4m11!4m10!1m0!1m3!2m2!1d138.1410697!2d36.150236!1m3!2m2!1d138.2388263!2d36.1109764!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "【静岡】伊豆スカイライン": (
@@ -51,10 +51,13 @@ SPOT_PRESETS = {
     "【和歌山/奈良】高野龍神スカイライン": (
         "https://www.google.com/maps/dir/34.215000,135.586000/34.045000,135.550000/"
     ),
-    "【愛媛/高知】四国カルスト（天狗高原）": (
+    "【山口】カルストロード（秋吉台）": (
         "https://www.google.com/maps/dir/33.480000,133.010000/33.470000,132.930000/"
     ),
-    "【熊本/大分】阿蘇やまなみハイウェイ": (
+    "【愛媛/高知】四国カルスト（天狗高原）": (
+        "https://www.google.com/maps/dir/33.478383,132.8778385/33.476513982071516,+133.0021898951934/@33.4674381,132.9568195,15.38z/data=!4m7!4m6!1m0!1m3!2m2!1d133.0021899!2d33.476514!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
+    "【熊本/大分】阿asoやまなみハイウェイ": (
         "https://www.google.com/maps/dir/33.2470522,131.2919401/32.939607,131.1175302/"
     ),
 }
@@ -127,7 +130,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：ダークモード対策 ＆ 入力バー等の可視性（グレー化）強化 ＆ レスポンシブ化
+# ★ CSSの設定：プレースホルダー見認性向・ブラックアウト完全回避・レスポンシブ化
 st.markdown(
     """
     <style>
@@ -149,27 +152,49 @@ st.markdown(
             color: #333333 !important;
         }
 
-        /* ★ ダークモード時でも入力フォームが黒く潰れないよう明るいグレー＆可視テキストに強制オーバーライド */
+        /* ★ 入力フォームの背景と基本テキスト */
         input[type="text"], 
         div[data-baseweb="input"], 
-        div[data-baseweb="select"], 
-        div[data-baseweb="select"] > div,
-        ul[data-baseweb="menu"],
-        li[data-baseweb="option"] {
+        div[data-baseweb="select"] {
             background-color: #f0f0f0 !important;
             color: #222222 !important;
             border-color: #cccccc !important;
         }
 
-        /* ドロップダウンメニューのポップアップ全体と選択肢テキストの調整 */
-        div[data-baseweb="popover"], ul[role="listbox"] {
-            background-color: #ffffff !important;
+        /* ★ プレースホルダーの文字色をハッキリとした濃いグレー(#666666)に固定 */
+        input[type="text"]::placeholder,
+        textarea::placeholder {
+            color: #666666 !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: #666666 !important;
         }
-        li[role="option"] {
+
+        /* ★ セレクトボックス（ドロップダウンメニュー）のブラックアウト防止対策 */
+        div[data-baseweb="popover"], 
+        div[data-baseweb="popover"] > div,
+        ul[role="listbox"],
+        ul[data-baseweb="menu"] {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.15) !important;
+        }
+
+        li[role="option"],
+        li[data-baseweb="option"] {
             background-color: #ffffff !important;
             color: #222222 !important;
         }
-        li[role="option"]:hover {
+
+        /* ドロップダウン選択肢のテキスト色強制固定 */
+        li[role="option"] *,
+        li[data-baseweb="option"] * {
+            color: #222222 !important;
+        }
+
+        li[role="option"]:hover,
+        li[data-baseweb="option"]:hover,
+        li[aria-selected="true"] {
             background-color: #e0e0e0 !important;
         }
 
@@ -300,9 +325,11 @@ else:
 # --- ② 見出し ＆ URL入力 ＆ プリセット連携 ---
 st.markdown("### ② URLをペーストしてください")
 
-# 入力欄の初期値をセッションで保持
+# セッション状態の初期化
 if "main_url_input" not in st.session_state:
     st.session_state["main_url_input"] = default_url
+if "selected_preset_key" not in st.session_state:
+    st.session_state["selected_preset_key"] = "-- 選択してください --"
 
 # プリセットが選択された時の処理（selectboxのon_changeコールバック）
 def on_preset_select():
@@ -310,12 +337,18 @@ def on_preset_select():
     if selected in SPOT_PRESETS:
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
 
+# ★ ユーザーが入力バーに直接手動入力した際の処理（text_inputのon_changeコールバック）
+def on_url_input_change():
+    # ユーザーが編集したらドロップダウンの選択を未選択（初期状態）に戻す
+    st.session_state["selected_preset_key"] = "-- 選択してください --"
+
 # 1. メインURL入力バー
 url_input = st.text_input(
     "URL入力欄",
     placeholder="https://www.google.com/maps/dir/...",
     label_visibility="collapsed",
     key="main_url_input",
+    on_change=on_url_input_change,
 )
 
 # 2. 「👉 タップして選択」へ文言変更したアコーディオン
