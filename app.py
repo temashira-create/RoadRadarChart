@@ -298,9 +298,8 @@ selected_option = st.selectbox(
     on_change=on_preset_select,
 )
 
-# 「独自の経路を入力する↓」が選択されている場合、手動入力エリアを表示
-if selected_option == "独自の経路を入力する↓":
-    st.markdown("<br>", unsafe_allow_html=True)
+# ★ セレクトボックスの真下に「👉 独自の経路を入力する」アコーディオンを常時表示
+with st.expander("👉 独自の経路を入力する"):
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
     # 手動URL入力バー
@@ -312,7 +311,7 @@ if selected_option == "独自の経路を入力する↓":
         on_change=on_url_input_change,
     )
 
-    # 「👉 URLをコピーする方法を見る」アコーディオン
+    # さらに内部のアコーディオン「👉 URLをコピーする方法を見る」
     with st.expander("👉 URLをコピーする方法を見る"):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         image_path = os.path.join(script_dir, "1.jpg")
@@ -332,6 +331,7 @@ if selected_option == "独自の経路を入力する↓":
         label_visibility="collapsed",
         key="custom_title_input",
     )
+
 
 st.markdown("<br>", unsafe_allow_html=True)
 
