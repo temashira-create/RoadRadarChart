@@ -83,6 +83,20 @@ def resolve_short_url(url):
     return url
 
 
+def shorten_url(long_url):
+    """長すぎるURLをTinyURL APIを使って短縮する"""
+    try:
+        response = requests.get(
+            f"https://tinyurl.com/api-create.php?url={urllib.parse.quote(long_url)}",
+            timeout=5,
+        )
+        if response.status_code == 200:
+            return response.text
+    except Exception:
+        pass
+    return long_url
+
+
 def create_clean_gmaps_url(route, coords):
     if not coords or len(coords) < 2:
         return ""
@@ -147,7 +161,6 @@ st.markdown(
             background-color: transparent !important;
         }
 
-        /* ▼▼▼ ボタンとその内部要素を強制的に左寄せにする設定 ▼▼▼ */
         div[data-testid="stButton"] {
             display: flex;
         }
@@ -167,7 +180,6 @@ st.markdown(
             text-align: left !important;
             margin: 0 !important;
         }
-        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
@@ -198,11 +210,15 @@ title_col1, title_col2 = st.columns([3, 1])
 
 with title_col1:
     styled_title = (
+        '<h1 style="margin: 0; padding: 0;">'
+        '<a href="./" target="_self" style="text-decoration: none; color: inherit;">'
         '🛣️ <span style="font-weight: bold; font-size: 2.0rem;">'
         '<span style="color: #B71C1C;">R</span>oad'
         '<span style="color: #B71C1C;">R</span>adar'
         '<span style="color: #E65100;">C</span>hart'
         "</span>"
+        "</a>"
+        "</h1>"
     )
     st.markdown(styled_title, unsafe_allow_html=True)
 
@@ -279,7 +295,7 @@ selected_option = st.selectbox(
     on_change=on_preset_select,
 )
 
-# 【慎重な人向け】セレクトボックスの下に常設する独立したボタン
+# セレクトボックスの下に常設する独立したボタン
 st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
 button_label = (
     "📂 プリセット選択に戻る"
@@ -288,7 +304,7 @@ button_label = (
 )
 st.button(button_label, on_click=toggle_custom_mode, use_container_width=True)
 
-# どちらの導線（プルダウンの最後、または下の独立ボタン）からでもカスタムモードがONになったら入力欄を表示
+# どちらの導線からでもカスタムモードがONになったら入力欄を表示
 if st.session_state["is_custom_mode"]:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
@@ -325,6 +341,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 if st.button("全ルート一括解析を実行", type="primary", use_container_width=True):
     target_url = st.session_state.get("main_url_input", "").strip()
     user_title = st.session_state.get("custom_title_input", "").strip()
+    selected_preset = st.session_state.get("selected_preset_key", "")
 
     if not api_key:
         st.error("APIキーが設定されていません。configファイル等を確認してください。")
@@ -387,7 +404,13 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                         custom_summary=image_title,
                     )
 
-                    clean_gmaps_url = create_clean_gmaps_url(route, coords)
+                    # ▼▼▼ 修正：プリセットならそのURL、カスタムならユーザーが入力したURL（展開後）を保持する ▼▼▼
+                    if selected_preset in SPOT_PRESETS:
+                        clean_gmaps_url = SPOT_PRESETS[selected_preset]
+                    else:
+                        clean_gmaps_url = expanded_url if target_url else create_clean_gmaps_url(route, coords)
+                    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
                     distance_km = parse_distance_km(route, metrics)
 
                     all_results.append({
@@ -433,8 +456,11 @@ if "all_analysis_results" in st.session_state:
         with header_col2:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
+                
+                # ユーザーが入力した長大なURLやプリセットURLも、ここで自動的に短縮（圧縮）される
+                short_gmaps_url = shorten_url(common_gmaps_url)
 
-                route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{common_gmaps_url}"
+                route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{short_gmaps_url}"
                 encoded_route_share_text = urllib.parse.quote(route_share_text)
                 route_x_share_url = f"https://twitter.com/intent/tweet?text={encoded_route_share_text}"
 
