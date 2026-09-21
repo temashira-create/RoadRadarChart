@@ -158,13 +158,19 @@ st.markdown(
             padding: 0px !important;
         }
 
-        /* ★ セレクトボックスの表示面（role="combobox"）とテキスト入力欄をピンポイントでグレー化 */
-        div[data-testid="stSelectbox"] div[role="combobox"],
+        /* ★ セレクトボックスのコンテナ全体をまとめてグレー＆枠線適用 */
+        div[data-testid="stSelectbox"] > div > div,
         div[data-testid="stTextInput"] input {
             background-color: #f2f2f2 !important;
+            border: 1px solid #e0e0e0 !important;
             border-radius: 8px !important;
         }
 
+        /* セレクトボックス内部の文字表示エリアの背景を透明にして下のグレーを透かせる */
+        div[data-testid="stSelectbox"] [role="combobox"] {
+            background-color: transparent !important;
+        }
+            
         /* セレクトボックス枠線の調整 */
         div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
         div[data-testid="stTextInput"] input {
