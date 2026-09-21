@@ -143,20 +143,12 @@ def parse_google_maps_url(url):
         if 'via' in params:
             waypoints.extend([urllib.parse.unquote(v) for v in params['via']])
 
-        # ★追加：daddrの中に「to:」が含まれている場合の分離処理
-        # 例: "37.0747350,138.8288350 to:37.0725460,138.8496120"
-        # または "+to:" がスペースやプラスに変換されている場合への対策
-        # まずは " to:" や "+to:" や "to:" で分割できるようにする
+        # daddrの中に「to:」が含まれている場合の分離処理
         if "to:" in raw_daddr or "+to:" in raw_daddr:
-            # プレースホルダや正規表現を使って to: で分割
-            # ここではシンプルに "to:"（前後のプラスやスペースも含めて）でsplitするアプローチ
-            # to: の前後に挟まる空白や "+" を考慮して分割
             parts = re.split(r'[\+\s]*to:', raw_daddr)
             
             if len(parts) >= 2:
-                # 最後の要素が真の目的地
                 destination = parts[-1].strip()
-                # 最後の要素以外（1つ目、あるいは途中のもの）はすべて経由地（waypoints）として追加する
                 intermediate_points = [p.strip() for p in parts[:-1] if p.strip()]
                 waypoints.extend(intermediate_points)
             else:
@@ -178,18 +170,9 @@ def parse_google_maps_url(url):
         waypoints = None
         if 'waypoints' in params:
             waypoints = [urllib.parse.unquote(pt) for pt in params['waypoints'][0].split('|')]
-        return origin, destination, waypoints, "Pattern 2 (origin/destination)" # ← 目印を追加
+        return origin, destination, waypoints, "Pattern 2 (origin/destination)"
 
-    # --- パターン3: !1d...!2d... (dataパラメータ内座標埋め込み) ---
-    coords_in_data = re.findall(r'!1d([0-9\.-]+)!2d([0-9\.-]+)', url)
-    if len(coords_in_data) >= 2:
-        points = [f"{pt[1]},{pt[0]}" for pt in coords_in_data]
-        origin = points[0]
-        destination = points[-1]
-        waypoints = points[1:-1] if len(points) > 2 else None
-        return origin, destination, waypoints, "Pattern 3 (data coords)" # ← 目印を追加
-
-    # --- パターン4: /dir/ パターン（PCブラウザなど） ---
+    # --- パターン4: /dir/ パターン（PCブラウザなどの王道ルート。最優先で処理） ---
     pattern_dir = r'/dir/([^?]+)'
     match_dir = re.search(pattern_dir, parsed.path if parsed.path else url)
     if match_dir:
@@ -204,7 +187,18 @@ def parse_google_maps_url(url):
             origin = cleaned_segments[0]
             destination = cleaned_segments[-1]
             waypoints = cleaned_segments[1:-1] if len(cleaned_segments) > 2 else None
-            return origin, destination, waypoints, "Pattern 4 (/dir/ path)" # ← 目印を追加
+            return origin, destination, waypoints, "Pattern 4 (/dir/ path)"
+
+    # --- パターン3: !1d...!2d... (dataパラメータ内座標埋め込み) ---
+    # ※王道パス(/dir/等)や明示的なパラメータがない場合の「例外・フォールバック」として扱う
+    if "/dir/" not in url and "saddr=" not in url and "origin=" not in url:
+        coords_in_data = re.findall(r'!1d([0-9\.-]+)!2d([0-9\.-]+)', url)
+        if len(coords_in_data) >= 2:
+            points = [f"{pt[1]},{pt[0]}" for pt in coords_in_data]
+            origin = points[0]
+            destination = points[-1]
+            waypoints = points[1:-1] if len(points) > 2 else None
+            return origin, destination, waypoints, "Pattern 3 (data coords)"
 
     # --- パターン5: URL全体から緯度経度ペアを全抽出する最終フォールバック ---
     lat_lng_pairs = re.findall(r'([0-9]+\.[0-9]+),([0-9]+\.[0-9]+)', url)
@@ -220,7 +214,7 @@ def parse_google_maps_url(url):
         origin = valid_coords[0]
         destination = valid_coords[-1]
         waypoints = valid_coords[1:-1] if len(valid_coords) > 2 else None
-        return origin, destination, waypoints, "Pattern 5 (fallback coords)" # ← 目印を追加
+        return origin, destination, waypoints, "Pattern 5 (fallback coords)"
 
     return None, None, None, "None (Failed)"
 
