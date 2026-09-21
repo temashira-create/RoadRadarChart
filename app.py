@@ -147,12 +147,6 @@ st.markdown(
             background-color: transparent !important;
         }
 
-        div.stButton > button {
-            text-align: left !important;
-            justify-content: flex-start !important;
-            padding-left: 15px !important;
-        }
-
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
@@ -245,7 +239,7 @@ current_selected = st.session_state.get("selected_preset_key", "-- 選択して�
 if current_selected not in preset_options:
     current_selected = "-- 選択してください --"
 
-# 1. プリセットセレクトボックス（一番下に独自の経路を含める）
+# セレクトボックス（一番下に独自の経路を含める）
 selected_option = st.selectbox(
     "主要ワインディングプリセット",
     options=preset_options,
@@ -254,14 +248,6 @@ selected_option = st.selectbox(
     key="selected_preset_key",
     on_change=on_preset_select,
 )
-
-# 2. 「👉 独自の経路を入力する」ボタン（バーのすぐ下に配置）
-if st.button("👉 独自の経路を入力する", use_container_width=True):
-    st.session_state["is_custom_mode"] = True
-    st.session_state["selected_preset_key"] = "👉 独自の経路を入力する↓"
-    st.session_state["main_url_input"] = ""
-    st.session_state["custom_title_input"] = ""
-    st.rerun()
 
 # 独自の経路入力モードが有効、またはセレクトボックスで「独自の経路を入力する↓」が選ばれている場合
 is_custom_active = (
