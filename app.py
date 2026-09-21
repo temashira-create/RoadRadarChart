@@ -21,6 +21,9 @@ SPOT_PRESETS = {
     "【岩手/秋田】八幡平アスピーテライン": (
         "https://www.google.com/maps/dir/39.9227227,140.9764819/39.9725475,140.8052669/"
     ),
+    "【宮城】コバルトライン": (
+        "https://www.google.com/maps/dir/38.43500383790911,+141.44633077780648/38.40267251250418,+141.45259500107528/38.32521250918779,+141.51287317973953/38.2804423,141.5185324/@38.3578769,141.3218905,11z/data=!3m1!4b1!4m15!4m14!1m3!2m2!1d141.4463308!2d38.4350038!1m3!2m2!1d141.452595!2d38.4026725!1m3!2m2!1d141.5128732!2d38.3252125!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+    ),
     "【宮城/山形】蔵王エコーライン": (
         "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
     ),
@@ -130,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：プレースホルダー見認性向・ブラックアウト完全回避・レスポンシブ化
+# ★ CSSの設定：プレースホルダー視認性向上・ブラックアウト完全回避・レスポンシブ化
 st.markdown(
     """
     <style>
@@ -169,33 +172,45 @@ st.markdown(
             -webkit-text-fill-color: #666666 !important;
         }
 
-        /* ★ セレクトボックス（ドロップダウンメニュー）のブラックアウト防止対策 */
-        div[data-baseweb="popover"], 
-        div[data-baseweb="popover"] > div,
-        ul[role="listbox"],
-        ul[data-baseweb="menu"] {
+        /* ★★★ セレクトボックス（ドロップダウンメニュー）ブラックアウト完全防止 ★★★ */
+        /* 1. 閉じている状態の枠・背景 */
+        div[data-baseweb="select"] > div {
             background-color: #ffffff !important;
             background: #ffffff !important;
             color: #222222 !important;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.15) !important;
+            border: 1px solid #cccccc !important;
         }
 
+        /* 2. 開いたときのポップアップ、メニュー、リスト外枠 */
+        div[data-baseweb="popover"], 
+        div[data-baseweb="popover"] *,
+        div[data-baseweb="menu"],
+        div[data-baseweb="menu"] *,
+        ul[role="listbox"],
+        ul[role="listbox"] * {
+            background-color: #ffffff !important;
+            color: #222222 !important;
+        }
+
+        /* 3. 各選択肢（Option）の背景・文字色 */
         li[role="option"],
         li[data-baseweb="option"] {
             background-color: #ffffff !important;
             color: #222222 !important;
         }
 
-        /* ドロップダウン選択肢のテキスト色強制固定 */
-        li[role="option"] *,
-        li[data-baseweb="option"] * {
-            color: #222222 !important;
-        }
-
+        /* 4. マウスホバー時・タップ時の背景と文字色 */
         li[role="option"]:hover,
         li[data-baseweb="option"]:hover,
         li[aria-selected="true"] {
-            background-color: #e0e0e0 !important;
+            background-color: #e2e8f0 !important;
+            color: #111111 !important;
+        }
+
+        li[role="option"]:hover *,
+        li[data-baseweb="option"]:hover *,
+        li[aria-selected="true"] * {
+            color: #111111 !important;
         }
 
         /* expander（👉 タップして選択）の枠線・背景色を完全に消去 */
