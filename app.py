@@ -27,7 +27,7 @@ SPOT_PRESETS = {
     "【宮城/山形】蔵王エコーライン": (
         "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
     ),
-    "【茨城】筑波スカイライン/朝日峠": (
+    "【茨城】筑波スカイライン / 朝日峠": (
         "https://www.google.com/maps/dir/36.1595485,140.1655816/36.2128858,140.122155/"
     ),
     "【栃木】第二いろは坂（上り）": (
@@ -133,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：プレースホルダー見認性向・ブラックアウト完全回避・レスポンシブ化
+# ★ CSSの設定：プレースホルダー視認性向上・ブラックアウト完全回避・レスポンシブ化
 st.markdown(
     """
     <style>
@@ -172,33 +172,45 @@ st.markdown(
             -webkit-text-fill-color: #666666 !important;
         }
 
-        /* ★ セレクトボックス（ドロップダウンメニュー）のブラックアウト防止対策 */
-        div[data-baseweb="popover"], 
-        div[data-baseweb="popover"] > div,
-        ul[role="listbox"],
-        ul[data-baseweb="menu"] {
+        /* ★★★ セレクトボックス（ドロップダウンメニュー）ブラックアウト完全防止 ★★★ */
+        /* 1. 閉じている状態の枠・背景 */
+        div[data-baseweb="select"] > div {
             background-color: #ffffff !important;
             background: #ffffff !important;
             color: #222222 !important;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.15) !important;
+            border: 1px solid #cccccc !important;
         }
 
+        /* 2. 開いたときのポップアップ、メニュー、リスト外枠 */
+        div[data-baseweb="popover"], 
+        div[data-baseweb="popover"] *,
+        div[data-baseweb="menu"],
+        div[data-baseweb="menu"] *,
+        ul[role="listbox"],
+        ul[role="listbox"] * {
+            background-color: #ffffff !important;
+            color: #222222 !important;
+        }
+
+        /* 3. 各選択肢（Option）の背景・文字色 */
         li[role="option"],
         li[data-baseweb="option"] {
             background-color: #ffffff !important;
             color: #222222 !important;
         }
 
-        /* ドロップダウン選択肢のテキスト色強制固定 */
-        li[role="option"] *,
-        li[data-baseweb="option"] * {
-            color: #222222 !important;
-        }
-
+        /* 4. マウスホバー時・タップ時の背景と文字色 */
         li[role="option"]:hover,
         li[data-baseweb="option"]:hover,
         li[aria-selected="true"] {
-            background-color: #e0e0e0 !important;
+            background-color: #e2e8f0 !important;
+            color: #111111 !important;
+        }
+
+        li[role="option"]:hover *,
+        li[data-baseweb="option"]:hover *,
+        li[aria-selected="true"] * {
+            color: #111111 !important;
         }
 
         /* expander（👉 タップして選択）の枠線・背景色を完全に消去 */
