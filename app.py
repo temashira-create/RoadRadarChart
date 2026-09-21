@@ -21,6 +21,24 @@ SPOT_PRESETS = {
     "北海道：支笏湖畔（国道453号）": (
         "https://www.google.com/maps/dir/42.9294804,141.3388389/42.7635329,141.433401/"
     ),
+    "青森：竜泊ライン（竜飛崎）": (
+        "https://maps.app.goo.gl/jVBaEPyf2oT6fMpT7?g_st=ic"
+    ),
+    "青森：海峡ライン（むつ）": (
+        "https://maps.app.goo.gl/Kq3p4pfDohceojNv8?g_st=ic"
+    ),
+    "青森：津軽岩木スカイライン": (
+        "https://maps.app.goo.gl/5bSn8FbUamGEPpRp8?g_st=ic"
+    ),
+    "青森：八甲田ゴールドライン": (
+        "https://maps.app.goo.gl/hb354xYMUaZA3MAr8?g_st=ic"
+    ),
+    "秋田：寒風山パノラマライン": (
+        "https://maps.app.goo.gl/MTGiwdxgsStvhVyp6?g_st=ic"
+    ),
+    "秋田/山形：鳥海ブルーライン": (
+        "https://maps.app.goo.gl/HW1PzjVbUgUfYabT9?g_st=ic"
+    ),
     "岩手/秋田：八幡平アスピーテライン": (
         "https://www.google.com/maps/dir/39.9227227,140.9764819/39.9725475,140.8052669/"
     ),
@@ -29,6 +47,18 @@ SPOT_PRESETS = {
     ),
     "宮城/山形：蔵王エコーライン": (
         "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
+    ),
+    "福島：磐梯吾妻スカイライン": (
+        "https://maps.app.goo.gl/FshDzeuVkJEnzfYr7?g_st=ic"
+    ),
+    "福島：磐梯吾妻レークライン": (
+        "https://maps.app.goo.gl/sifoJKQVhDHJyngE8?g_st=ic"
+    ),
+    "福島：磐梯山ゴールドライン": (
+        "https://maps.app.goo.gl/ZuEkJL81hxVH2jjSA?g_st=ic"
+    ),
+    "新潟：魚沼スカイライン": (
+        "https://maps.app.goo.gl/C1GRRKFT5WxoVroD8?g_st=ic"
     ),
     "茨城：筑波スカイライン / 朝日峠": (
         "https://www.google.com/maps/dir/36.1595485,140.1655816/36.2128858,140.122155/"
