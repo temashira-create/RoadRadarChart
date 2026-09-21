@@ -97,18 +97,30 @@ def archive_old_outputs(base_dir):
         print(f"[整理完了] 過去の出力ファイル {moved_count} 件を 'output_old/' に移動しました。")
 
 def expand_url(short_url):
-    """短縮URLの展開（User-Agentを指定してリダイレクト崩れを防止）"""
-    if not short_url or "maps.app.goo.gl" not in short_url and "goo.gl" not in short_url:
+    """短縮URLの展開（JSリダイレクトや中間ページ対策を強化）"""
+    if not short_url or ("maps.app.goo.gl" not in short_url and "goo.gl" not in short_url):
         return short_url
         
     headers = {
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
     }
     try:
-        # 複数回のリダイレクトや履歴をしっかり追う
         response = requests.get(short_url, headers=headers, allow_redirects=True, timeout=10)
-        # 最終的なURLを返す
-        return response.url
+        final_url = response.url
+
+        # Googleマップ特有の中間ページやメタタグからURLを回収するフォールバック
+        if "google.com/maps" not in final_url or "maps.app.goo.gl" in final_url:
+            # HTML内から window.location や meta refresh のURLを探す
+            match = re.search(r'href="(https://www\.google\.com/maps/dir/[^"]+)"', response.text)
+            if match:
+                final_url = match.group(1)
+            else:
+                # 代替パターン
+                match_meta = re.search(r'content="0;url=(https://www\.google\.com/maps/[^"]+)"', response.text)
+                if match_meta:
+                    final_url = match_meta.group(1)
+
+        return final_url
     except Exception as e:
         print(f"URL展開エラー: {e}")
         return short_url
@@ -167,6 +179,25 @@ def parse_google_maps_url(url):
             destination = cleaned_segments[-1]
             waypoints = cleaned_segments[1:-1] if len(cleaned_segments) > 2 else None
             return origin, destination, waypoints
+
+    # --- パターン5: URL全体から緯度経度ペアを全抽出する最終フォールバック ---
+    # 例: /@35.123,135.456,12z や /dir/35.123,135.456/35.789,135.123 のような形式に対応
+    lat_lng_pairs = re.findall(r'([0-9]+\.[0-9]+),([0-9]+\.[0-9]+)', url)
+    # 重複を除きつつ、座標らしいペア（日本付近の緯度経度: 緯度20〜45, 経度120〜150あたり）をフィルタリングするとより確実
+    valid_coords = []
+    for lat_s, lng_s in lat_lng_pairs:
+        lat, lng = float(lat_s), float(lng_s)
+        # 日本の国土周辺の簡易的な範囲チェック（およそ緯度20〜46、経度122〜154）
+        if 20.0 <= lat <= 46.0 and 122.0 <= lng <= 154.0:
+            coord_str = f"{lat},{lng}"
+            if coord_str not in valid_coords:
+                valid_coords.append(coord_str)
+
+    if len(valid_coords) >= 2:
+        origin = valid_coords[0]
+        destination = valid_coords[-1]
+        waypoints = valid_coords[1:-1] if len(valid_coords) > 2 else None
+        return origin, destination, waypoints
 
     return None, None, None
 
