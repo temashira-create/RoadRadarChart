@@ -137,93 +137,19 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* メインエリア全体の背景と文字色（ダークモード視認性対策） */
+        /* メインエリア全体の背景と余白調整（padding-topを0に設定して上部の空間を消去） */
         .main .block-container {
-            background-color: #fffde7 !important;
-            color: #333333 !important;
-            padding: 1.5rem;
+            background-color: #fffde7;
+            padding-top: 0rem !important;
+            padding-bottom: 1.5rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
             border-radius: 12px;
         }
-        /* アプリ全体の背景と標準テキストカラー指定 */
+        /* アプリ全体の背景 */
         .stApp {
-            background-color: #fefce8 !important;
-            color: #333333 !important;
+            background-color: #fefce8;
         }
-        
-        /* 見出し・段落・ラベル・ボタン内等のテキスト色を固定 */
-        h1, h2, h3, h4, h5, h6, p, label, span, div {
-            color: #333333 !important;
-        }
-
-        /* ★ 入力フォームの背景と基本テキスト */
-        input[type="text"], 
-        div[data-baseweb="input"], 
-        div[data-baseweb="select"] {
-            background-color: #f0f0f0 !important;
-            color: #222222 !important;
-            border-color: #cccccc !important;
-        }
-
-        /* ★ プレースホルダーの文字色をハッキリとした濃いグレー(#666666)に固定 */
-        input[type="text"]::placeholder,
-        textarea::placeholder {
-            color: #666666 !important;
-            opacity: 1 !important;
-            -webkit-text-fill-color: #666666 !important;
-        }
-
-        /* ★★★ セレクトボックス（ドロップダウンメニュー）ブラックアウト完全防止 ★★★ */
-        /* 1. 閉じている状態の枠・背景 */
-        div[data-baseweb="select"] > div {
-            background-color: #ffffff !important;
-            background: #ffffff !important;
-            color: #222222 !important;
-            border: 1px solid #cccccc !important;
-        }
-
-        /* 2. 開いたときのポップアップ、メニュー、リスト外枠 */
-        div[data-baseweb="popover"], 
-        div[data-baseweb="popover"] *,
-        div[data-baseweb="menu"],
-        div[data-baseweb="menu"] *,
-        ul[role="listbox"],
-        ul[role="listbox"] * {
-            background-color: #ffffff !important;
-            color: #222222 !important;
-        }
-
-        /* 3. 各選択肢（Option）の背景・文字色 */
-        li[role="option"],
-        li[data-baseweb="option"] {
-            background-color: #ffffff !important;
-            color: #222222 !important;
-        }
-
-        /* 4. マウスホバー時・タップ時の背景と文字色 */
-        li[role="option"]:hover,
-        li[data-baseweb="option"]:hover,
-        li[aria-selected="true"] {
-            background-color: #e2e8f0 !important;
-            color: #111111 !important;
-        }
-
-        li[role="option"]:hover *,
-        li[data-baseweb="option"]:hover *,
-        li[aria-selected="true"] * {
-            color: #111111 !important;
-        }
-
-        /* expander（👉 タップして選択）の枠線・背景色を完全に消去 */
-        div[data-testid="stExpander"], 
-        details[data-testid="stExpander"],
-        div[data-testid="stExpander"] > div,
-        details[data-testid="stExpander"] > summary {
-            border: none !important;
-            border-color: #fffde7 !important;
-            box-shadow: none !important;
-            background-color: transparent !important;
-        }
-
         /* サイドバーを完全に隠す */
         section[data-testid="stSidebar"] {
             display: none;
@@ -234,11 +160,9 @@ st.markdown(
         .stHtml, iframe {
             background-color: transparent !important;
         }
-        /* ヘッダー（Deployボタン・メニュー）を非表示にする */
+        /* ヘッダー（Deployボタン・メニュー）を完全に消去して高さを詰める */
         header[data-testid="stHeader"] {
-            visibility: hidden !important;
-            height: 0px !important;
-            padding: 0px !important;
+            display: none !important;
         }
         
         /* フッター（Made with Streamlit）を非表示にする */
@@ -258,7 +182,7 @@ st.markdown(
             overflow-wrap: break-word;
         }
 
-        /* PCで横並び・スマホで縦並びにするレスポンシブCSS */
+        /* ★ PCで横並び・スマホで縦並びにする強制レスポンシブCSS */
         @media (max-width: 768px) {
             div[data-testid="stColumn"] {
                 width: 100% !important;
