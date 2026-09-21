@@ -348,6 +348,9 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                 f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"
             )
         else:
+            # === デバッグ用：何が出発地・目的地として渡されているか画面に出す ===
+            st.warning(f"【デバッグ】抽出された出発地: {origin} / 目的地: {destination} / 経由地: {waypoints}")
+
             with st.spinner("ルート候補を一括取得・解析中..."):
                 routes = get_all_routes_info(origin, destination, waypoints, api_key)
 
