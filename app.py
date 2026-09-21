@@ -150,11 +150,10 @@ st.markdown(
         header[data-testid="stHeader"] { display: none !important; }
         footer { visibility: hidden !important; height: 0px !important; padding: 0px !important; }
 
-        /* ▼▼▼ リンクに表示される鎖（カプセル）マークを非表示にする ▼▼▼ */
+        /* リンクに表示される鎖（カプセル）マークを非表示にする */
         a svg, .stMarkdown a svg {
             display: none !important;
         }
-        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
         div[data-testid="stSelectbox"] > div > div,
         div[data-testid="stTextInput"] input {
@@ -410,12 +409,11 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                         custom_summary=image_title,
                     )
 
-                    # ▼▼▼ 修正：プリセットならそのURL、カスタムならユーザーが入力したURL（展開後）を保持する ▼▼▼
+                    # プリセットならそのURL、カスタムならユーザーが入力したURL（展開後）を保持する
                     if selected_preset in SPOT_PRESETS:
                         clean_gmaps_url = SPOT_PRESETS[selected_preset]
                     else:
                         clean_gmaps_url = expanded_url if target_url else create_clean_gmaps_url(route, coords)
-                    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
                     distance_km = parse_distance_km(route, metrics)
 
@@ -463,7 +461,7 @@ if "all_analysis_results" in st.session_state:
             if all_results and "clean_gmaps_url" in all_results[0]:
                 common_gmaps_url = all_results[0]["clean_gmaps_url"]
                 
-                # ユーザーが入力した長大なURLやプリセットURLも、ここで自動的に短縮（圧縮）される
+                # ユーザーが入力した長大なURLやプリセットURLもここで短縮
                 short_gmaps_url = shorten_url(common_gmaps_url)
 
                 route_share_text = f"RoadRadarChartで解析したGoogle Mapsルートはこちら：\n{short_gmaps_url}"
@@ -639,3 +637,62 @@ if "all_analysis_results" in st.session_state:
             """,
             unsafe_allow_html=True,
         )
+
+# --- フッター（ツール開発者） ---
+st.markdown("<br><hr>", unsafe_allow_html=True)
+st.markdown("### ツール開発者")
+
+footer_image_path = os.path.join(script_dir, "2.png")
+
+# X（Twitter）メンション付き投稿画面用のリンクテキスト作成
+footer_x_text = (
+    "RoadRadarChartについて連絡です！\n"
+    "@sudenohito\n"
+    "#RoadRadarChart"
+)
+encoded_footer_x_text = urllib.parse.quote(footer_x_text)
+footer_x_intent_url = f"https://twitter.com/intent/tweet?text={encoded_footer_x_text}"
+
+if os.path.exists(footer_image_path):
+    f_col1, f_col2 = st.columns([0.18, 0.82])
+    with f_col1:
+        st.image(footer_image_path, use_container_width=True)
+    with f_col2:
+        st.markdown(
+            """
+            <div style="font-size: 0.9rem; line-height: 1.7; color: #333;">
+                <b>素手の人</b><br>
+                このツールはGeminiにpythonを書いてもらって作りました。<br>
+                １日の実行回数制限を設けることで完全無料で動いていますので安心してお使いください。<br><br>
+                バグなどあればXのメンションで教えてもらえると助かります。<br>
+                デフォルトの道に加えてほしい道も教えてもらえると嬉しいです！
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        # Xメンション付き投稿ボタン
+        st.markdown(
+            f"""
+            <div style="margin: 10px 0;">
+                <a href="{footer_x_intent_url}" target="_blank" style="
+                    background-color: #000000; color: white; padding: 6px 14px; border-radius: 20px;
+                    text-decoration: none; font-weight: bold; font-size: 12px; display: inline-flex;
+                    align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                ">𝕏 で作者(@sudenohito)に連絡する</a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div style="font-size: 0.9rem; line-height: 1.7; color: #333; margin-top: 8px;">
+                非営利なので、やれることには限界があるけど、頑張ります。<br>
+                <span style="color: #777; font-size: 0.85rem;">2026/9/21</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+else:
+    st.info("※ 2.png が見つかりません。スクリプトと同じ場所に配置してください。")
