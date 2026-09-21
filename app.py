@@ -67,7 +67,6 @@ SPOT_PRESETS = {
 
 
 def resolve_short_url(url):
-    """maps.app.goo.gl などの短縮URLを展開して正式なURLを返す"""
     if "maps.app.goo.gl" in url or "goo.gl" in url:
         try:
             headers = {
@@ -85,21 +84,14 @@ def resolve_short_url(url):
 
 
 def create_clean_gmaps_url(route, coords):
-    """ルートの座標データ等から、スッキリとしたGoogleマップ共有用URLを生成する"""
     if not coords or len(coords) < 2:
         return ""
     start_lat, start_lng = coords[0]
     end_lat, end_lng = coords[-1]
-
-    origin_param = f"{start_lat},{start_lng}"
-    dest_param = f"{end_lat},{end_lng}"
-
-    clean_url = f"https://www.google.com/maps/dir/?api=1&origin={origin_param}&destination={dest_param}&travelmode=driving"
-    return clean_url
+    return f"https://www.google.com/maps/dir/?api=1&origin={start_lat},{start_lng}&destination={end_lat},{end_lng}&travelmode=driving"
 
 
 def parse_distance_km(route, metrics):
-    """様々なデータ構造から安全に走行距離(km)を取得する関数"""
     if isinstance(metrics, dict):
         if "distance_km" in metrics:
             return float(metrics["distance_km"])
@@ -122,43 +114,28 @@ def parse_distance_km(route, metrics):
             if unit and unit.lower() == "m" and val > 500:
                 return val / 1000.0
             return val
-
     return 0.0
 
 
-# サイドバーを初期状態で閉じる設定
 st.set_page_config(
     page_title="RoadRadarChart - ルート特性分析ツール",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：セレクトボックスおよびテキスト入力欄をグレー化 ＆ ボタンテキストの左寄せ
 st.markdown(
     """
     <style>
-        /* メインエリアの余白調整 */
         .main .block-container {
             padding-top: 0rem !important;
             padding-bottom: 1.5rem;
             padding-left: 1.5rem;
             padding-right: 1.5rem;
         }
-        /* サイドバーを隠す */
-        section[data-testid="stSidebar"] {
-            display: none;
-        }
-        /* ヘッダー・フッターの非表示化 */
-        header[data-testid="stHeader"] {
-            display: none !important;
-        }
-        footer {
-            visibility: hidden !important;
-            height: 0px !important;
-            padding: 0px !important;
-        }
+        section[data-testid="stSidebar"] { display: none; }
+        header[data-testid="stHeader"] { display: none !important; }
+        footer { visibility: hidden !important; height: 0px !important; padding: 0px !important; }
 
-        /* ★ セレクトボックスのコンテナ全体をまとめてグレー＆枠線適用 */
         div[data-testid="stSelectbox"] > div > div,
         div[data-testid="stTextInput"] input {
             background-color: #f2f2f2 !important;
@@ -166,29 +143,21 @@ st.markdown(
             border-radius: 8px !important;
         }
 
-        /* セレクトボックス内部の文字表示エリアの背景を透明にして下のグレーを透かせる */
         div[data-testid="stSelectbox"] [role="combobox"] {
             background-color: transparent !important;
         }
 
-        /* ボタンのテキストを左寄せ＆アコーディオン風にデザイン調整 */
         div.stButton > button {
             text-align: left !important;
             justify-content: flex-start !important;
             padding-left: 15px !important;
         }
 
-        /* 見出しのスタイル調整 */
         h1 { font-size: 1.8rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
-        
-        h1, h2, h3 {
-            word-break: keep-all;
-            overflow-wrap: break-word;
-        }
+        h1, h2, h3 { word-break: keep-all; overflow-wrap: break-word; }
 
-        /* スマホ向けレスポンシブ化 */
         @media (max-width: 768px) {
             div[data-testid="stColumn"] {
                 width: 100% !important;
@@ -201,19 +170,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- バックグラウンドでAPIキーと設定を取得 ---
 api_key_default, thresholds_default, scoring_weights = load_config()
 api_key = api_key_default
 
-# --- アプリ基本URL（外部ブラウザ強制起動パラメータ付き） ---
 APP_BASE_URL = "https://roadradarchart-eh3pdimpf5mqnf96utrzd8.streamlit.app/?openExternalBrowser=1"
-
-# --- 𝕏 共有用のテキスト・URL作成 ---
 share_text = f"RoadRadarChart - ロード特性分析ツール\n#RoadRadarChart\n{APP_BASE_URL}"
 encoded_share_text = urllib.parse.quote(share_text)
 twitter_intent_url = f"https://twitter.com/intent/tweet?text={encoded_share_text}"
 
-# --- メインタイトル ＆ 𝕏 共有ボタン ---
 title_col1, title_col2 = st.columns([3, 1])
 
 with title_col1:
@@ -231,25 +195,15 @@ with title_col2:
         f"""
         <div style="display: flex; align-items: center; height: 100%; padding-top: 5px;">
             <a href="{twitter_intent_url}" target="_blank" style="
-                background-color: #000000;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 20px;
-                text-decoration: none;
-                font-weight: bold;
-                font-size: 13px;
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                white-space: nowrap;
+                background-color: #000000; color: white; padding: 8px 16px; border-radius: 20px;
+                text-decoration: none; font-weight: bold; font-size: 13px; display: inline-flex;
+                align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;
             ">𝕏 で共有する</a>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-# --- URLパラメータから初期値取得 ---
 query_params = st.query_params
 default_url = query_params.get("map_url", "")
 
@@ -265,28 +219,33 @@ if "is_custom_mode" not in st.session_state:
 
 
 # --- コールバック関数の定義 ---
-
-# 1. プリセットが選択されたとき
 def on_preset_select():
     selected = st.session_state.get("selected_preset_key")
     if selected in SPOT_PRESETS:
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
         st.session_state["custom_title_input"] = selected
         st.session_state["is_custom_mode"] = False
+    elif selected == "👉 独自の経路を入力する↓":
+        st.session_state["is_custom_mode"] = True
+        st.session_state["main_url_input"] = ""
+        st.session_state["custom_title_input"] = ""
 
 
 # --- 道を選択してください ---
 st.markdown("### 道を選択してください")
 
-# 選択肢の定義
-preset_options = ["-- 選択してください --"] + list(SPOT_PRESETS.keys())
+# 選択肢の一番下に「独自の経路を入力する↓」を含める
+preset_options = (
+    ["-- 選択してください --"]
+    + list(SPOT_PRESETS.keys())
+    + ["👉 独自の経路を入力する↓"]
+)
 
-# 現在の選択状態がプリセット内にあるか確認
 current_selected = st.session_state.get("selected_preset_key", "-- 選択してください --")
 if current_selected not in preset_options:
     current_selected = "-- 選択してください --"
 
-# 1. プリセットセレクトボックス（バーを上に配置）
+# 1. プリセットセレクトボックス（一番下に独自の経路を含める）
 selected_option = st.selectbox(
     "主要ワインディングプリセット",
     options=preset_options,
@@ -299,19 +258,22 @@ selected_option = st.selectbox(
 # 2. 「👉 独自の経路を入力する」ボタン（バーのすぐ下に配置）
 if st.button("👉 独自の経路を入力する", use_container_width=True):
     st.session_state["is_custom_mode"] = True
+    st.session_state["selected_preset_key"] = "👉 独自の経路を入力する↓"
     st.session_state["main_url_input"] = ""
     st.session_state["custom_title_input"] = ""
     st.rerun()
 
-# 独自の経路入力モードが有効、またはセレクトボックスでカスタム設定になっている場合
-is_custom_active = st.session_state.get("is_custom_mode", False) or (selected_option not in SPOT_PRESETS and selected_option != "-- 選択してください --")
+# 独自の経路入力モードが有効、またはセレクトボックスで「独自の経路を入力する↓」が選ばれている場合
+is_custom_active = (
+    st.session_state.get("is_custom_mode", False)
+    or selected_option == "👉 独自の経路を入力する↓"
+)
 
 # ★ 入力エリアの展開
 if is_custom_active:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
-    # 手動URL入力バー
     st.text_input(
         "URL入力欄",
         placeholder="https://www.google.com/maps/dir/...",
@@ -319,7 +281,6 @@ if is_custom_active:
         key="main_url_input",
     )
 
-    # 「👉 URLをコピーする方法を見る」アコーディオン（画像収納）
     with st.expander("👉 URLをコピーする方法を見る"):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         image_path = os.path.join(script_dir, "1.jpg")
@@ -343,7 +304,6 @@ if is_custom_active:
 st.markdown("<br>", unsafe_allow_html=True)
 
 if st.button("全ルート一括解析を実行", type="primary", use_container_width=True):
-    # 最新の入力値を取得
     target_url = st.session_state.get("main_url_input", "").strip()
     user_title = st.session_state.get("custom_title_input", "").strip()
 
@@ -370,7 +330,6 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
                 all_results = []
 
                 for i, route in enumerate(routes):
-                    # タイトル未入力（空欄）または「自動」の場合はルートのサマリーを使用
                     if not user_title or user_title == "自動":
                         image_title = route.get("summary", "")
                     else:
