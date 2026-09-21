@@ -91,7 +91,7 @@ SPOT_PRESETS = {
         "https://www.google.com/maps/dir/34.215000,135.586000/34.045000,135.550000/"
     ),
     "山口：カルストロード（秋吉台）": (
-        ""
+        "https://www.google.com/maps/dir/34.2255452,131.3101625/34.259289856746385,+131.3178088016478/34.2806685809623,+131.3307230605381/@34.2576208,131.2841446,9203m/data=!3m1!1e3!4m11!4m10!1m0!1m3!2m2!1d131.3178088!2d34.2592899!1m3!2m2!1d131.3307231!2d34.2806686!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "愛媛/高知：四国カルスト（天狗高原）": (
         "https://www.google.com/maps/dir/33.478383,132.8778385/33.476513982071516,+133.0021898951934/@33.4674381,132.9568195,15.38z/data=!4m7!4m6!1m0!1m3!2m2!1d133.0021899!2d33.476514!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
@@ -277,6 +277,11 @@ if "is_custom_mode" not in st.session_state:
 # --- コールバック関数の定義 ---
 def on_preset_select():
     selected = st.session_state.get("selected_preset_key")
+    
+    # 【追加】別のプリセットや独自の入力に切り替えた際、古い解析結果・デバッグ情報をクリアする
+    st.session_state.pop("all_analysis_results", None)
+    st.session_state.pop("last_url_debug", None)
+    
     if selected in SPOT_PRESETS:
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
         st.session_state["custom_title_input"] = selected
@@ -286,16 +291,19 @@ def on_preset_select():
         st.session_state["main_url_input"] = ""
         st.session_state["custom_title_input"] = ""
 
-
 def toggle_custom_mode():
     st.session_state["is_custom_mode"] = not st.session_state["is_custom_mode"]
+    
+    # 【追加】カスタムモードの切替時も、古い解析結果・デバッグ情報をクリアする
+    st.session_state.pop("all_analysis_results", None)
+    st.session_state.pop("last_url_debug", None)
+    
     if st.session_state["is_custom_mode"]:
         st.session_state["main_url_input"] = ""
         st.session_state["custom_title_input"] = ""
         st.session_state["selected_preset_key"] = "-- 選択してください --"
     else:
         st.session_state["selected_preset_key"] = "-- 選択してください --"
-
 
 # --- 道を選択してください ---
 st.markdown("### 道を選択してください")
@@ -711,10 +719,10 @@ if os.path.exists(footer_image_path):
             """
             <div style="font-size: 0.9rem; line-height: 1.7; color: #333;">
                 <b>素手の人</b><br>
-                このツールはGeminiにpythonを書いてもらって作りました。<br>
+                Geminiにpythonを書いてもらいました。<br>
                 １日の実行回数制限を設けることで完全無料で動いていますので安心してお使いください。<br><br>
-                バグなどあればXのメンションで教えてもらえると助かります。<br>
-                フォルトの道に加えてほしい道も教えてもらえると嬉しいです！
+                バグなどはXのメンションで教えてもらえると助かります。<br>
+                デフォルトの道に加えてほしい道があれば、ぜひ教えてください！
             </div>
             """,
             unsafe_allow_html=True,
@@ -736,7 +744,7 @@ if os.path.exists(footer_image_path):
         st.markdown(
             """
             <div style="font-size: 0.9rem; line-height: 1.7; color: #333; margin-top: 8px;">
-                非営利なので、やれることには限界があるけど、頑張ります。<br>
+                ※非営利なのでやれることには限界があります。<br>
                 <span style="color: #777; font-size: 0.85rem;">2026/9/21</span>
             </div>
             """,
