@@ -158,9 +158,8 @@ st.markdown(
             padding: 0px !important;
         }
 
-        /* ★ セレクトボックス（内部のcomboboxまで全て）およびテキスト入力欄をグレー化 */
-        div[data-testid="stSelectbox"] div[data-baseweb="select"],
-        div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+        /* ★ セレクトボックスの表示面（role="combobox"）とテキスト入力欄をピンポイントでグレー化 */
+        div[data-testid="stSelectbox"] div[role="combobox"],
         div[data-testid="stTextInput"] input {
             background-color: #f2f2f2 !important;
             border-radius: 8px !important;
