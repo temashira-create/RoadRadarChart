@@ -253,6 +253,8 @@ if "selected_preset_key" not in st.session_state:
     st.session_state["selected_preset_key"] = "-- 選択してください --"
 if "custom_title_input" not in st.session_state:
     st.session_state["custom_title_input"] = ""
+if "show_custom_input" not in st.session_state:
+    st.session_state["show_custom_input"] = False
 
 
 # --- コールバック関数の定義 ---
@@ -265,10 +267,12 @@ def on_preset_select():
         st.session_state["main_url_input"] = SPOT_PRESETS[selected]
         # タイトルにプリセット名を自動入力
         st.session_state["custom_title_input"] = selected
+        st.session_state["show_custom_input"] = False
     elif selected == "独自の経路を入力する↓":
-        # クリア
+        # クリアして表示フラグを立てる
         st.session_state["main_url_input"] = ""
         st.session_state["custom_title_input"] = ""
+        st.session_state["show_custom_input"] = True
 
 
 # 2. 手動でURLが入力・変更されたとき
@@ -289,7 +293,7 @@ preset_options = (
     + ["独自の経路を入力する↓"]
 )
 
-# プリセットセレクトボックス
+# 1. プリセットセレクトボックス
 selected_option = st.selectbox(
     "主要ワインディングプリセット",
     options=preset_options,
@@ -298,8 +302,19 @@ selected_option = st.selectbox(
     on_change=on_preset_select,
 )
 
-# ★ セレクトボックスの真下に「👉 独自の経路を入力する」アコーディオンを常時表示
-with st.expander("👉 独自の経路を入力する"):
+# 2. 「👉 独自の経路を入力する」ボタン（タップ契機①）
+if st.button("👉 独自の経路を入力する", use_container_width=True):
+    st.session_state["show_custom_input"] = True
+    st.session_state["selected_preset_key"] = "独自の経路を入力する↓"
+    st.session_state["main_url_input"] = ""
+    st.session_state["custom_title_input"] = ""
+
+# セレクトボックス選択（契機②）またはボタン押下（契機①）のどちらかを判定
+is_custom_selected = (selected_option == "独自の経路を入力する↓") or st.session_state.get("show_custom_input", False)
+
+# ★ 契機①または契機②を満たした場合にスーッと入力エリアを展開
+if is_custom_selected:
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
     # 手動URL入力バー
@@ -311,7 +326,7 @@ with st.expander("👉 独自の経路を入力する"):
         on_change=on_url_input_change,
     )
 
-    # さらに内部のアコーディオン「👉 URLをコピーする方法を見る」
+    # 「👉 URLをコピーする方法を見る」アコーディオン（画像収納）
     with st.expander("👉 URLをコピーする方法を見る"):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         image_path = os.path.join(script_dir, "1.jpg")
@@ -331,7 +346,6 @@ with st.expander("👉 独自の経路を入力する"):
         label_visibility="collapsed",
         key="custom_title_input",
     )
-
 
 st.markdown("<br>", unsafe_allow_html=True)
 
