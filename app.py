@@ -133,7 +133,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ★ CSSの設定：セレクトボックス（赤矢印）と入力欄をグレー化、expander（青矢印）は透明に維持
+# ★ CSSの設定：セレクトボックス（内部要素含む）およびテキスト入力欄を確実にグレー化
 st.markdown(
     """
     <style>
@@ -158,13 +158,17 @@ st.markdown(
             padding: 0px !important;
         }
 
-        /* ★ セレクトボックス（赤矢印）およびテキスト入力欄をグレー化 */
-        div[data-baseweb="select"] > div,
-        div[data-baseweb="input"] > div,
-        div[data-testid="stTextInput"] input,
-        div[data-testid="stSelectbox"] > div {
+        /* ★ セレクトボックス（内部のcomboboxまで全て）およびテキスト入力欄をグレー化 */
+        div[data-testid="stSelectbox"] div[data-baseweb="select"],
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+        div[data-testid="stTextInput"] input {
             background-color: #f2f2f2 !important;
             border-radius: 8px !important;
+        }
+
+        /* セレクトボックス枠線の調整 */
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        div[data-testid="stTextInput"] input {
             border: 1px solid #e0e0e0 !important;
         }
 
@@ -278,7 +282,7 @@ def on_url_input_change():
 # --- ① 道を選択してください ---
 st.markdown("### ① 道を選択してください")
 
-# 1. プリセットセレクトボックス（赤矢印箇所：背景グレー）
+# 1. プリセットセレクトボックス
 st.selectbox(
     "主要ワインディングプリセット",
     options=["-- 選択してください --"] + list(SPOT_PRESETS.keys()),
@@ -287,7 +291,7 @@ st.selectbox(
     on_change=on_preset_select,
 )
 
-# 2. アコーディオン（青矢印箇所：元通りの背景に戻す）
+# 2. アコーディオン（デフォルト背景）
 with st.expander("👉 独自の経路を入力する"):
     st.markdown("Googleマップで経路を検索して、そのURLをコピー＆ペーストしてください。")
 
