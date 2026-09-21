@@ -341,8 +341,17 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
         with st.spinner("URL展開・解析中..."):
             # Roadscore.py 側の expand_url を使用してスマホの短縮URLを確実に展開
             expanded_url = expand_url(target_url)
-            origin, destination, waypoints = parse_google_maps_url(expanded_url)
-
+            # 4つ目の要素（どのパターンを通ったか）も一緒に受け取るように変更
+            origin, destination, waypoints, matched_pattern = parse_google_maps_url(expanded_url)
+        # デバッグ表示をここでパワーアップ！
+        st.warning(
+            f"【詳細デバッグ】\n"
+            f"- 通過したパターン: {matched_pattern}\n"
+            f"- 展開されたURL: {expanded_url}\n"
+            f"- 抽出された出発地: {origin}\n"
+            f"- 抽出された目的地: {destination}\n"
+            f"- 抽出された経由地: {waypoints}"
+        )
         if not origin or not destination:
             st.error(
                 f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"

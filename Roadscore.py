@@ -134,7 +134,7 @@ def parse_google_maps_url(url):
     parsed = urllib.parse.urlparse(url)
     params = urllib.parse.parse_qs(parsed.query)
 
-    # --- パターン1: saddr / daddr 形式（スマホ共有アプリから生成されるURLなど）---
+    # --- パターン1: saddr / daddr 形式 ---
     if 'saddr' in params and 'daddr' in params:
         origin = urllib.parse.unquote(params['saddr'][0])
         destination = urllib.parse.unquote(params['daddr'][0])
@@ -142,7 +142,7 @@ def parse_google_maps_url(url):
         waypoints = None
         if 'via' in params:
             waypoints = [urllib.parse.unquote(v) for v in params['via']]
-        return origin, destination, waypoints
+        return origin, destination, waypoints, "Pattern 1 (saddr/daddr)" # ← 目印を追加
 
     # --- パターン2: origin / destination 形式 ---
     if 'origin' in params and 'destination' in params:
@@ -152,7 +152,7 @@ def parse_google_maps_url(url):
         waypoints = None
         if 'waypoints' in params:
             waypoints = [urllib.parse.unquote(pt) for pt in params['waypoints'][0].split('|')]
-        return origin, destination, waypoints
+        return origin, destination, waypoints, "Pattern 2 (origin/destination)" # ← 目印を追加
 
     # --- パターン3: !1d...!2d... (dataパラメータ内座標埋め込み) ---
     coords_in_data = re.findall(r'!1d([0-9\.-]+)!2d([0-9\.-]+)', url)
@@ -161,9 +161,9 @@ def parse_google_maps_url(url):
         origin = points[0]
         destination = points[-1]
         waypoints = points[1:-1] if len(points) > 2 else None
-        return origin, destination, waypoints
+        return origin, destination, waypoints, "Pattern 3 (data coords)" # ← 目印を追加
 
-    # --- パターン4: /dir/ パターン（PCブラウザなど）---
+    # --- パターン4: /dir/ パターン（PCブラウザなど） ---
     pattern_dir = r'/dir/([^?]+)'
     match_dir = re.search(pattern_dir, parsed.path if parsed.path else url)
     if match_dir:
@@ -178,16 +178,13 @@ def parse_google_maps_url(url):
             origin = cleaned_segments[0]
             destination = cleaned_segments[-1]
             waypoints = cleaned_segments[1:-1] if len(cleaned_segments) > 2 else None
-            return origin, destination, waypoints
+            return origin, destination, waypoints, "Pattern 4 (/dir/ path)" # ← 目印を追加
 
     # --- パターン5: URL全体から緯度経度ペアを全抽出する最終フォールバック ---
-    # 例: /@35.123,135.456,12z や /dir/35.123,135.456/35.789,135.123 のような形式に対応
     lat_lng_pairs = re.findall(r'([0-9]+\.[0-9]+),([0-9]+\.[0-9]+)', url)
-    # 重複を除きつつ、座標らしいペア（日本付近の緯度経度: 緯度20〜45, 経度120〜150あたり）をフィルタリングするとより確実
     valid_coords = []
     for lat_s, lng_s in lat_lng_pairs:
         lat, lng = float(lat_s), float(lng_s)
-        # 日本の国土周辺の簡易的な範囲チェック（およそ緯度20〜46、経度122〜154）
         if 20.0 <= lat <= 46.0 and 122.0 <= lng <= 154.0:
             coord_str = f"{lat},{lng}"
             if coord_str not in valid_coords:
@@ -197,9 +194,9 @@ def parse_google_maps_url(url):
         origin = valid_coords[0]
         destination = valid_coords[-1]
         waypoints = valid_coords[1:-1] if len(valid_coords) > 2 else None
-        return origin, destination, waypoints
+        return origin, destination, waypoints, "Pattern 5 (fallback coords)" # ← 目印を追加
 
-    return None, None, None
+    return None, None, None, "None (Failed)"
 
 def decode_polyline(polyline_str):
     """Polylineのデコード"""
