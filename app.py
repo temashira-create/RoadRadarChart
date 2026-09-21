@@ -25,7 +25,7 @@ SPOT_PRESETS = {
         "https://maps.app.goo.gl/jVBaEPyf2oT6fMpT7?g_st=ic"
     ),
     "青森：海峡ライン（むつ）": (
-        "https://maps.app.goo.gl/Kq3p4pfDohceojNv8?g_st=ic"
+        "https://www.google.com/maps/dir/41.144062,140.82239/41.310400673543235,+140.80841548079505/41.431879,140.862334/@41.2880309,140.4976279,67124m/data=!3m2!1e3!4b1!4m10!4m9!1m1!4e1!1m3!2m2!1d140.8084155!2d41.3104007!1m1!4e1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "青森：津軽岩木スカイライン": (
         "https://maps.app.goo.gl/5bSn8FbUamGEPpRp8?g_st=ic"
@@ -37,13 +37,13 @@ SPOT_PRESETS = {
         "https://maps.app.goo.gl/MTGiwdxgsStvhVyp6?g_st=ic"
     ),
     "秋田/山形：鳥海ブルーライン": (
-        "https://maps.app.goo.gl/HW1PzjVbUgUfYabT9?g_st=ic"
+        "https://www.google.com/maps/dir/39.080152,139.879072/39.115387,139.986897/39.1727021213136,+139.9485256245377/@39.1261347,139.8526562,17325m/data=!3m2!1e3!4b1!4m10!4m9!1m1!4e1!1m1!4e1!1m3!2m2!1d139.9485256!2d39.1727021!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "岩手/秋田：八幡平アスピーテライン": (
         "https://www.google.com/maps/dir/39.9227227,140.9764819/39.9725475,140.8052669/"
     ),
     "宮城：コバルトライン": (
-        "https://www.google.com/maps/dir/38.43500383790911,+141.44633077780648/38.40267251250418,+141.45259500107528/38.32521250918779,+141.51287317973953/38.2804423,141.5185324/@38.3578769,141.3218905,11z/data=!3m1!4b1!4m15!4m14!1m3!2m2!1d141.4463308!2d38.4350038!1m3!2m2!1d141.452595!2d38.402672!1m3!2m2!1d141.5128732!2d38.325212!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
+        "https://www.google.com/maps/dir/38.4351072,141.446273/38.4051257,141.4547581/38.3357818,141.5034304/38.2804597,141.5184963/@38.2925297,141.4658676,9346m/data=!3m1!1e3!4m2!4m1!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "宮城/山形：蔵王エコーライン": (
         "https://www.google.com/maps/dir/38.1303618,140.5596896/38.1295749,140.3792595/"
@@ -62,6 +62,9 @@ SPOT_PRESETS = {
     ),
     "茨城：筑波スカイライン / 朝日峠": (
         "https://www.google.com/maps/dir/36.1595485,140.1655816/36.2128858,140.122155/"
+    ),
+    "栃木：第一いろは坂（下り）": (
+        "https://www.google.com/maps/dir/36.73952487320231,+139.5017292225485/36.7413674,139.5233524/@36.7432922,139.502241,15z/data=!3m1!4b1!4m7!4m6!1m3!2m2!1d139.5017292!2d36.7395249!1m0!3e0?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
     ),
     "栃木：第二いろは坂（上り）": (
         "https://www.google.com/maps/dir/36.7382917,139.5256014/36.7376547,139.4988488/"
@@ -88,7 +91,7 @@ SPOT_PRESETS = {
         "https://www.google.com/maps/dir/34.215000,135.586000/34.045000,135.550000/"
     ),
     "山口：カルストロード（秋吉台）": (
-        "https://www.google.com/maps/dir/33.480000,133.010000/33.470000,132.930000/"
+        ""
     ),
     "愛媛/高知：四国カルスト（天狗高原）": (
         "https://www.google.com/maps/dir/33.478383,132.8778385/33.476513982071516,+133.0021898951934/@33.4674381,132.9568195,15.38z/data=!4m7!4m6!1m0!1m3!2m2!1d133.0021899!2d33.476514!3e0?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D"
@@ -374,14 +377,13 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
             # 4つ目の要素（どのパターンを通ったか）も一緒に受け取るように変更
             origin, destination, waypoints, matched_pattern = parse_google_maps_url(expanded_url)
         # デバッグ表示をここでパワーアップ！
-        st.warning(
-            f"【解析詳細】\n"
-            f"- 通過したパターン: {matched_pattern}\n"
-            f"- 展開されたURL: {expanded_url}\n"
-            f"- 抽出された出発地: {origin}\n"
-            f"- 抽出された目的地: {destination}\n"
-            f"- 抽出された経由地: {waypoints}"
-        )
+        # 折りたたみ式にすることで、消えずにいつでも確認・展開できるようにする
+        with st.expander("🔍 解析詳細（クリックして展開）", expanded=False):
+            st.write(f"- **通過したパターン**: {matched_pattern}")
+            st.write(f"- **展開されたURL**: `{expanded_url}`")
+            st.write(f"- **抽出された出発地**: `{origin}`")
+            st.write(f"- **抽出された目的地**: `{destination}`")
+            st.write(f"- **抽出された経由地**: `{waypoints}`")
         if not origin or not destination:
             st.error(
                 f"入力されたURL（展開後: {expanded_url}）から有効な「出発地」および「目的地」を検出できませんでした。"
