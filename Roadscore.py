@@ -134,15 +134,42 @@ def parse_google_maps_url(url):
     parsed = urllib.parse.urlparse(url)
     params = urllib.parse.parse_qs(parsed.query)
 
-    # --- パターン1: saddr / daddr 形式 ---
+    # --- パターン1: saddr / daddr 形式（スマホ共有アプリから生成されるURLなど）---
     if 'saddr' in params and 'daddr' in params:
         origin = urllib.parse.unquote(params['saddr'][0])
-        destination = urllib.parse.unquote(params['daddr'][0])
+        raw_daddr = urllib.parse.unquote(params['daddr'][0])
         
-        waypoints = None
+        waypoints = []
         if 'via' in params:
-            waypoints = [urllib.parse.unquote(v) for v in params['via']]
-        return origin, destination, waypoints, "Pattern 1 (saddr/daddr)" # ← 目印を追加
+            waypoints.extend([urllib.parse.unquote(v) for v in params['via']])
+
+        # ★追加：daddrの中に「to:」が含まれている場合の分離処理
+        # 例: "37.0747350,138.8288350 to:37.0725460,138.8496120"
+        # または "+to:" がスペースやプラスに変換されている場合への対策
+        # まずは " to:" や "+to:" や "to:" で分割できるようにする
+        if "to:" in raw_daddr or "+to:" in raw_daddr:
+            # プレースホルダや正規表現を使って to: で分割
+            # ここではシンプルに "to:"（前後のプラスやスペースも含めて）でsplitするアプローチ
+            import re
+            # to: の前後に挟まる空白や "+" を考慮して分割
+            parts = re.split(r'[\+\s]*to:', raw_daddr)
+            
+            if len(parts) >= 2:
+                # 最後の要素が真の目的地
+                destination = parts[-1].strip()
+                # 最後の要素以外（1つ目、あるいは途中のもの）はすべて経由地（waypoints）として追加する
+                intermediate_points = [p.strip() for p in parts[:-1] if p.strip()]
+                waypoints.extend(intermediate_points)
+            else:
+                destination = raw_daddr
+        else:
+            destination = raw_daddr
+
+        # waypointsが空リストならNoneに戻す
+        if not waypoints:
+            waypoints = None
+
+        return origin, destination, waypoints, "Pattern 1 (saddr/daddr with to: split)"
 
     # --- パターン2: origin / destination 形式 ---
     if 'origin' in params and 'destination' in params:

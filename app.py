@@ -345,7 +345,7 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
             origin, destination, waypoints, matched_pattern = parse_google_maps_url(expanded_url)
         # デバッグ表示をここでパワーアップ！
         st.warning(
-            f"【詳細デバッグ】\n"
+            f"【解析詳細】\n"
             f"- 通過したパターン: {matched_pattern}\n"
             f"- 展開されたURL: {expanded_url}\n"
             f"- 抽出された出発地: {origin}\n"
@@ -358,7 +358,7 @@ if st.button("全ルート一括解析を実行", type="primary", use_container_
             )
         else:
             # === デバッグ用：何が出発地・目的地として渡されているか画面に出す ===
-            st.warning(f"【デバッグ】抽出された出発地: {origin} / 目的地: {destination} / 経由地: {waypoints}")
+            st.warning(f"【解析】抽出された出発地: {origin} / 目的地: {destination} / 経由地: {waypoints}")
 
             with st.spinner("ルート候補を一括取得・解析中..."):
                 routes = get_all_routes_info(origin, destination, waypoints, api_key)
